@@ -8,6 +8,17 @@ module Bindings (F : FOREIGN) = struct
     foreign "mlirAffineExprGetContext" (Typs.AffineExpr.t @-> returning Typs.Context.t)
 
 
+  (* Returns `true` if the two affine expressions are equal. *)
+  let equal =
+    foreign
+      "mlirAffineExprEqual"
+      (Typs.AffineExpr.t @-> Typs.AffineExpr.t @-> returning bool)
+
+
+  (* Returns `true` if the given affine expression is a null expression. Note
+     constant zero is not a null expression. *)
+  let is_null = foreign "mlirAffineExprIsNull" (Typs.AffineExpr.t @-> returning bool)
+
   (* Prints an affine expression by sending chunks of the string representation
    * and forwarding `userData to `callback`. Note that the callback may be called
    * several times with consecutive chunks of the string. *)
@@ -53,11 +64,21 @@ module Bindings (F : FOREIGN) = struct
       (Typs.AffineExpr.t @-> intptr_t @-> returning bool)
 
 
+  (* Composes the given map with the given expression. *)
+  let compose =
+    foreign
+      "mlirAffineExprCompose"
+      (Typs.AffineExpr.t @-> Typs.AffineMap.t @-> returning Typs.AffineExpr.t)
+
+
   (*===----------------------------------------------------------------------===
    * Affine Dimension Expression.
    *===----------------------------------------------------------------------===*)
 
   module Dimension = struct
+    (* Checks whether the given affine expression is a dimension expression. *)
+    let is_dim = foreign "mlirAffineExprIsADim" (Typs.AffineExpr.t @-> returning bool)
+
     (* Creates an affine dimension expression with 'position' in the context. *)
     let get =
       foreign
@@ -74,6 +95,11 @@ module Bindings (F : FOREIGN) = struct
    * Affine Symbol Expression.
    *===----------------------------------------------------------------------===*)
   module Symbol = struct
+    (* Checks whether the given affine expression is a symbol expression. *)
+    let is_symbol =
+      foreign "mlirAffineExprIsASymbol" (Typs.AffineExpr.t @-> returning bool)
+
+
     (* Creates an affine symbol expression with 'position' in the context. *)
     let get =
       foreign
@@ -90,6 +116,11 @@ module Bindings (F : FOREIGN) = struct
    * Affine Constant Expression.
    *===----------------------------------------------------------------------===*)
   module Constant = struct
+    (* Checks whether the given affine expression is a constant expression. *)
+    let is_constant =
+      foreign "mlirAffineExprIsAConstant" (Typs.AffineExpr.t @-> returning bool)
+
+
     (* Creates an affine constant expression with 'constant' in the context. *)
     let get =
       foreign
@@ -185,6 +216,11 @@ module Bindings (F : FOREIGN) = struct
    * Affine Binary Operation Expression.
    *===----------------------------------------------------------------------===*)
   module BinaryOp = struct
+    (* Checks whether the given affine expression is binary. *)
+    let is_binary =
+      foreign "mlirAffineExprIsABinary" (Typs.AffineExpr.t @-> returning bool)
+
+
     (* Returns the left hand side affine expression of the given affine binary
      * operation expression. *)
     let lhs =
