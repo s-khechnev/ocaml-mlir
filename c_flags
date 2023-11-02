@@ -1,0 +1,17 @@
+-fPIC
+-Werror=date-time
+-Wall
+-Wextra
+-Wno-unused-parameter
+-Wwrite-strings
+-Wno-missing-field-initializers
+-Wimplicit-fallthrough
+-Wno-comment
+-ffunction-sections
+-fdata-sections
+-Iinclude
+-I/home/s-khechnev/Desktop/llvm-project/llvm//../mlir/include
+-I/home/s-khechnev/Desktop/llvm-project/llvm//include
+-I/home/s-khechnev/Desktop/llvm-project/build/include
+-I/home/s-khechnev/Desktop/llvm-project/build/tools/mlir/include
+-I../include

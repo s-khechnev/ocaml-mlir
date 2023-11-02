@@ -1,0 +1,1 @@
+("-L/home/s-khechnev/Desktop/llvm-project/llvm//../mlir/lib" "-L/home/s-khechnev/Desktop/llvm-project/llvm//lib" "-L/home/s-khechnev/Desktop/llvm-project/build/lib" "-L/home/s-khechnev/Desktop/llvm-project/build/tools/mlir/lib" "-lMLIRPublicAPI")

@@ -7,14 +7,14 @@ let with_file ~f file =
 
 let () =
   with_file "mlir_types.c" ~f:(fun fmt_c ->
-      Format.fprintf fmt_c "#include \"mlir-c/AffineExpr.h\"@.";
-      Format.fprintf fmt_c "#include \"mlir-c/AffineMap.h\"@.";
-      Format.fprintf fmt_c "#include \"mlir-c/Diagnostics.h\"@.";
-      Format.fprintf fmt_c "#include \"mlir-c/IR.h\"@.";
-      Format.fprintf fmt_c "#include \"mlir-c/Pass.h\"@.";
-      Format.fprintf fmt_c "#include \"mlir-c/Registration.h\"@.";
-      Format.fprintf fmt_c "#include \"mlir-c/BuiltinAttributes.h\"@.";
-      Format.fprintf fmt_c "#include \"mlir-c/BuiltinTypes.h\"@.";
-      Format.fprintf fmt_c "#include \"mlir-c/StandardDialect.h\"@.";
-      Format.fprintf fmt_c "#include \"mlir-c/Transforms.h\"@.";
-      Cstubs.Types.write_c fmt_c (module Types.Bindings))
+    Format.fprintf fmt_c "#include \"mlir-c/AffineExpr.h\"@.";
+    Format.fprintf fmt_c "#include \"mlir-c/AffineMap.h\"@.";
+    Format.fprintf fmt_c "#include \"mlir-c/Diagnostics.h\"@.";
+    Format.fprintf fmt_c "#include \"mlir-c/IR.h\"@.";
+    Format.fprintf fmt_c "#include \"mlir-c/Pass.h\"@.";
+    Format.fprintf fmt_c "#include \"mlir-c/RegisterEverything.h\"@.";
+    Format.fprintf fmt_c "#include \"mlir-c/BuiltinAttributes.h\"@.";
+    Format.fprintf fmt_c "#include \"mlir-c/BuiltinTypes.h\"@.";
+    (* Format.fprintf fmt_c "#include \"mlir-c/StandardDialect.h\"@."; *)
+    Format.fprintf fmt_c "#include \"mlir-c/Transforms.h\"@.";
+    Cstubs.Types.write_c fmt_c (module Types.Bindings))
