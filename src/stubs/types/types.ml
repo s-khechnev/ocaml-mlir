@@ -4,6 +4,20 @@ module Bindings (S : Cstubs.Types.TYPE) = struct
   open S
 
   (* Support.h Types *)
+  module TypeId = struct
+    type t
+
+    let t : t structure typ = structure "MlirTypeId"
+    let ptr = field t "ptr" (ptr void)
+  end
+
+  module TypeIDAllocator = struct
+    type t
+
+    let t : t structure typ = structure "MlirTypeIDAllocator"
+    let ptr = field t "ptr" (ptr void)
+  end
+
   module StringRef = struct
     type t
 
@@ -38,6 +52,14 @@ module Bindings (S : Cstubs.Types.TYPE) = struct
     let () = seal t
   end
 
+  module DialectRegistry = struct
+    type t
+
+    let t : t structure typ = structure "MlirDialectRegistry"
+    let ptr = field t "ptr" (ptr void)
+    let () = seal t
+  end
+
   module Operation = struct
     type t
 
@@ -46,10 +68,19 @@ module Bindings (S : Cstubs.Types.TYPE) = struct
     let () = seal t
   end
 
+  module OpOperand = struct
+    type t
+
+    let t : t structure typ = structure "MlirOpOperand"
+    let ptr = field t "ptr" (ptr void)
+    let () = seal t
+  end
+
   module OpPrintingFlags = struct
     type t
 
     let t : t structure typ = structure "MlirOpPrintingFlags"
+    let ptr = field t "ptr" (ptr void)
     let () = seal t
   end
 
@@ -57,6 +88,7 @@ module Bindings (S : Cstubs.Types.TYPE) = struct
     type t
 
     let t : t structure typ = structure "MlirBlock"
+    let ptr = field t "ptr" (ptr void)
     let () = seal t
   end
 
@@ -64,6 +96,15 @@ module Bindings (S : Cstubs.Types.TYPE) = struct
     type t
 
     let t : t structure typ = structure "MlirRegion"
+    let ptr = field t "ptr" (ptr void)
+    let () = seal t
+  end
+
+  module SymbolTable = struct
+    type t
+
+    let t : t structure typ = structure "MlirSymbolTable"
+    let ptr = field t "ptr" (ptr void)
     let () = seal t
   end
 
@@ -95,6 +136,7 @@ module Bindings (S : Cstubs.Types.TYPE) = struct
     type t
 
     let t : t structure typ = structure "MlirModule"
+    let ptr = field t "ptr" (ptr void)
     let () = seal t
   end
 
@@ -102,6 +144,7 @@ module Bindings (S : Cstubs.Types.TYPE) = struct
     type t
 
     let t : t structure typ = structure "MlirType"
+    let ptr = field t "ptr" (ptr void)
     let () = seal t
   end
 
@@ -109,6 +152,7 @@ module Bindings (S : Cstubs.Types.TYPE) = struct
     type t
 
     let t : t structure typ = structure "MlirValue"
+    let ptr = field t "ptr" (ptr void)
     let () = seal t
   end
 
@@ -116,8 +160,16 @@ module Bindings (S : Cstubs.Types.TYPE) = struct
     type t
 
     let t : t structure typ = structure "MlirNamedAttribute"
-    let name = field t "name" StringRef.t
+    let name = field t "name" Identifier.t
     let attribute = field t "attribute" Attribute.t
+    let () = seal t
+  end
+
+  module DialectHandle = struct
+    type t
+
+    let t : t structure typ = structure "MlirDialectHandle"
+    let ptr = field t "ptr" (ptr void)
     let () = seal t
   end
 
@@ -137,6 +189,7 @@ module Bindings (S : Cstubs.Types.TYPE) = struct
     let successors = field t "successors" (ptr Block.t)
     let nAttributes = field t "nAttributes" intptr_t
     let attributes = field t "attributes" (ptr Attribute.t)
+    let enableResultTypeInference = field t "enableResultTypeInference" bool
     let () = seal t
   end
 
@@ -145,6 +198,14 @@ module Bindings (S : Cstubs.Types.TYPE) = struct
     type t
 
     let t : t structure typ = structure "MlirPass"
+    let ptr = field t "ptr" (ptr void)
+    let () = seal t
+  end
+
+  module ExternalPass = struct
+    type t
+
+    let t : t structure typ = structure "MlirExternalPass"
     let ptr = field t "ptr" (ptr void)
     let () = seal t
   end
