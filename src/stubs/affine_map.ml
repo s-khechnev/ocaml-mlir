@@ -34,12 +34,26 @@ module Bindings (F : FOREIGN) = struct
     foreign "mlirAffineMapEmptyGet" (Typs.Context.t @-> returning Typs.AffineMap.t)
 
 
+  (*  Creates a zero result affine map of the given dimensions and symbols in the
+      context. The affine map is owned by the context.
+  *)
+  let zero_result =
+    foreign
+      "mlirAffineMapZeroResultGet"
+      (Typs.Context.t @-> intptr_t @-> intptr_t @-> returning Typs.AffineMap.t)
+
+
   (* Creates a zero result affine map of the given dimensions and symbols in the
    * context. The affine map is owned by the context. *)
   let get =
     foreign
       "mlirAffineMapGet"
-      (Typs.Context.t @-> intptr_t @-> intptr_t @-> returning Typs.AffineMap.t)
+      (Typs.Context.t
+       @-> intptr_t
+       @-> intptr_t
+       @-> intptr_t
+       @-> ptr Typs.AffineExpr.t
+       @-> returning Typs.AffineMap.t)
 
 
   (* Creates a single constant result affine map in the context. The affine map
@@ -118,6 +132,11 @@ module Bindings (F : FOREIGN) = struct
     foreign "mlirAffineMapGetNumResults" (Typs.AffineMap.t @-> returning intptr_t)
 
 
+  (* Returns the result at the given position. *)
+  let result =
+    foreign "mlirAffineMapGetResult" (Typs.AffineMap.t @-> intptr_t @-> returning intptr_t)
+
+
   (* Returns the number of inputs (dimensions + symbols) of the given affine
    * map. *)
   let num_inputs =
@@ -161,4 +180,38 @@ module Bindings (F : FOREIGN) = struct
     foreign
       "mlirAffineMapGetMinorSubMap"
       (Typs.AffineMap.t @-> intptr_t @-> returning Typs.AffineMap.t)
+
+
+  (* Apply AffineExpr::replace(`map`) to each of the results and return a new
+     new AffineMap with the new results and the specified number of dims and
+     symbols.
+  *)
+  let replace =
+    foreign
+      "mlirAffineMapReplace"
+      (Typs.AffineMap.t
+       @-> Typs.AffineExpr.t
+       @-> Typs.AffineExpr.t
+       @-> intptr_t
+       @-> intptr_t
+       @-> returning Typs.AffineMap.t)
+
+
+  (* Returns the simplified affine map resulting from dropping the symbols that
+     do not appear in any of the individual maps in `affineMaps`.
+     Asserts that all maps in `affineMaps` are normalized to the same number of
+     dims and symbols.
+     Takes a callback `populateResult` to fill the `res` container with value
+     `m` at entry `idx`. This allows returning without worrying about ownership
+     considerations.
+  *)
+  let compress_unused_symbols =
+    foreign
+      "mlirAffineMapCompressUnusedSymbols"
+      (ptr Typs.AffineMap.t
+       @-> intptr_t
+       @-> ptr void
+       @-> Ctypes.(
+             Foreign.funptr (ptr void @-> intptr_t @-> Typs.AffineMap.t @-> returning void))
+       @-> returning void)
 end
