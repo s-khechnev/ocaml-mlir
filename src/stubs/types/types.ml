@@ -4,10 +4,10 @@ module Bindings (S : Cstubs.Types.TYPE) = struct
   open S
 
   (* Support.h Types *)
-  module TypeId = struct
+  module TypeID = struct
     type t
 
-    let t : t structure typ = structure "MlirTypeId"
+    let t : t structure typ = structure "MlirTypeID"
     let ptr = field t "ptr" (ptr void)
   end
 
