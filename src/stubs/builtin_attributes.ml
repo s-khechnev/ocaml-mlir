@@ -3,11 +3,14 @@ open Ctypes
 module Bindings (F : FOREIGN) = struct
   open F
 
-  module AffineMap = struct
-    (*===----------------------------------------------------------------------===
+  (* Returns an empty attribute. *)
+  let null = foreign "mlirAttributeGetNull" (void @-> returning Typs.Attribute.t)
+
+  (*===----------------------------------------------------------------------===
    * Affine map attribute.
    *===----------------------------------------------------------------------===*)
 
+  module AffineMap = struct
     (* Checks whether the given attribute is an affine map attribute. *)
     let is_affine_map =
       foreign "mlirAttributeIsAAffineMap" (Typs.Attribute.t @-> returning bool)
@@ -27,6 +30,7 @@ module Bindings (F : FOREIGN) = struct
   (*===----------------------------------------------------------------------===
    * Array attribute.
    *===----------------------------------------------------------------------===*)
+
   module Array = struct
     (* Checks whether the given attribute is an array attribute. *)
     let is_array = foreign "mlirAttributeIsAArray" (Typs.Attribute.t @-> returning bool)
@@ -37,9 +41,9 @@ module Bindings (F : FOREIGN) = struct
       foreign
         "mlirArrayAttrGet"
         (Typs.Context.t
-        @-> intptr_t
-        @-> ptr Typs.Attribute.t
-        @-> returning Typs.Attribute.t)
+         @-> intptr_t
+         @-> ptr Typs.Attribute.t
+         @-> returning Typs.Attribute.t)
 
 
     (* Returns the number of elements stored in the given array attribute. *)
@@ -70,9 +74,9 @@ module Bindings (F : FOREIGN) = struct
       foreign
         "mlirDictionaryAttrGet"
         (Typs.Context.t
-        @-> intptr_t
-        @-> ptr Typs.NamedAttribute.t
-        @-> returning Typs.Attribute.t)
+         @-> intptr_t
+         @-> ptr Typs.NamedAttribute.t
+         @-> returning Typs.Attribute.t)
 
 
     (* Returns the number of attributes contained in a dictionary attribute. *)
@@ -128,9 +132,10 @@ module Bindings (F : FOREIGN) = struct
       foreign "mlirFloatAttrGetValueDouble" (Typs.Attribute.t @-> returning double)
   end
 
-  (**===----------------------------------------------------------------------===
+  (*===----------------------------------------------------------------------===
    * Integer attribute.
    *===----------------------------------------------------------------------===*)
+
   module Integer = struct
     (* TODO: add support for APFloat and APInt to LLVM IR C API, then expose the
      * relevant functions here. *)
@@ -148,8 +153,20 @@ module Bindings (F : FOREIGN) = struct
 
     (* Returns the value stored in the given integer attribute, assuming the value
      * fits into a 64-bit integer. *)
-    let value =
+    let value_int =
       foreign "mlirIntegerAttrGetValueInt" (Typs.Attribute.t @-> returning int64_t)
+
+
+    (* Returns the value stored in the given integer attribute, assuming the value
+       is of signed type and fits into a signed 64-bit integer. *)
+    let value_sint =
+      foreign "mlirIntegerAttrGetValueSInt" (Typs.Attribute.t @-> returning int64_t)
+
+
+    (* Returns the value stored in the given integer attribute, assuming the value
+       is of unsigned type and fits into an unsigned 64-bit integer. *)
+    let value_uint =
+      foreign "mlirIntegerAttrGetValueUInt" (Typs.Attribute.t @-> returning uint64_t)
   end
 
   (*===----------------------------------------------------------------------===
@@ -194,11 +211,11 @@ module Bindings (F : FOREIGN) = struct
       foreign
         "mlirOpaqueAttrGet"
         (Typs.Context.t
-        @-> Typs.StringRef.t
-        @-> intptr_t
-        @-> ptr char
-        @-> Typs.Type.t
-        @-> returning Typs.Attribute.t)
+         @-> Typs.StringRef.t
+         @-> intptr_t
+         @-> ptr char
+         @-> Typs.Type.t
+         @-> returning Typs.Attribute.t)
 
 
     (* Returns the namespace of the dialect with which the given opaque attribute
@@ -262,10 +279,10 @@ module Bindings (F : FOREIGN) = struct
       foreign
         "mlirSymbolRefAttrGet"
         (Typs.Context.t
-        @-> Typs.StringRef.t
-        @-> intptr_t
-        @-> ptr Typs.Attribute.t
-        @-> returning Typs.Attribute.t)
+         @-> Typs.StringRef.t
+         @-> intptr_t
+         @-> ptr Typs.Attribute.t
+         @-> returning Typs.Attribute.t)
 
 
     (* Returns the string reference to the root referenced symbol. The data remains
@@ -328,6 +345,7 @@ module Bindings (F : FOREIGN) = struct
   (*===----------------------------------------------------------------------===
    * Type attribute.
    *===----------------------------------------------------------------------===*)
+
   module Type = struct
     (* Checks whether the given attribute is a type attribute. *)
     let is_type = foreign "mlirAttributeIsAType" (Typs.Attribute.t @-> returning bool)
@@ -343,6 +361,7 @@ module Bindings (F : FOREIGN) = struct
   (*===----------------------------------------------------------------------===
    * Unit attribute.
    *===----------------------------------------------------------------------===*)
+
   module Unit = struct
     (* Checks whether the given attribute is a unit attribute. *)
     let is_unit = foreign "mlirAttributeIsAUnit" (Typs.Attribute.t @-> returning bool)
@@ -354,6 +373,7 @@ module Bindings (F : FOREIGN) = struct
   (*===----------------------------------------------------------------------===
    * Elements attributes.
    *===----------------------------------------------------------------------===*)
+
   module Elements = struct
     (* Checks whether the given attribute is an elements attribute. *)
     let is_elements =
@@ -383,313 +403,748 @@ module Bindings (F : FOREIGN) = struct
 
 
     (*===----------------------------------------------------------------------===
-     * Dense elements attribute.
-     *===----------------------------------------------------------------------===*)
-    module Dense = struct
-      (* TODO: decide on the interface and add support for complex elements. *)
-      (* TODO: add support for APFloat and APInt to LLVM IR C API, then expose the
-       * relevant functions here. *)
+       Dense array attribute.
+      ===----------------------------------------------------------------------===*)
 
-      (* Checks whether the given attribute is a dense elements attribute. *)
-      let is_dense =
-        foreign "mlirAttributeIsADenseElements" (Typs.Attribute.t @-> returning bool)
+    (* Checks whether the given attribute is a dense array attribute. *)
+    let is_dense_bool_arr =
+      foreign "mlirAttributeIsADenseBoolArray" (Typs.Attribute.t @-> returning bool)
 
 
-      let is_dense_int =
-        foreign "mlirAttributeIsADenseIntElements" (Typs.Attribute.t @-> returning bool)
+    let is_dense_int8_arr =
+      foreign "mlirAttributeIsADenseI8Array" (Typs.Attribute.t @-> returning bool)
 
 
-      let is_dense_fpe =
-        foreign "mlirAttributeIsADenseFPElements" (Typs.Attribute.t @-> returning bool)
+    let is_dense_int16_arr =
+      foreign "mlirAttributeIsADenseI16Array" (Typs.Attribute.t @-> returning bool)
 
 
-      (* Creates a dense elements attribute with the given Shaped type and elements
-       * in the same context as the type. *)
-      let get =
-        foreign
-          "mlirDenseElementsAttrGet"
-          (Typs.Type.t
-          @-> intptr_t
-          @-> ptr Typs.Attribute.t
-          @-> returning Typs.Attribute.t)
+    let is_dense_int32_arr =
+      foreign "mlirAttributeIsADenseI32Array" (Typs.Attribute.t @-> returning bool)
 
 
-      (* Creates a dense elements attribute with the given Shaped type containing a
-       * single replicated element (splat). *)
-      let splat_get =
-        foreign
-          "mlirDenseElementsAttrSplatGet"
-          (Typs.Type.t @-> Typs.Attribute.t @-> returning Typs.Attribute.t)
+    let is_dense_int64_arr =
+      foreign "mlirAttributeIsADenseI64Array" (Typs.Attribute.t @-> returning bool)
 
 
-      let bool_splat_get =
-        foreign
-          "mlirDenseElementsAttrBoolSplatGet"
-          (Typs.Type.t @-> bool @-> returning Typs.Attribute.t)
+    let is_dense_float_arr =
+      foreign "mlirAttributeIsADenseF32Array" (Typs.Attribute.t @-> returning bool)
 
 
-      let uint32_splat_get =
-        foreign
-          "mlirDenseElementsAttrUInt32SplatGet"
-          (Typs.Type.t @-> uint32_t @-> returning Typs.Attribute.t)
+    let is_dense_double_arr =
+      foreign "mlirAttributeIsADenseF64Array" (Typs.Attribute.t @-> returning bool)
 
 
-      let int32_splat_get =
-        foreign
-          "mlirDenseElementsAttrInt32SplatGet"
-          (Typs.Type.t @-> int32_t @-> returning Typs.Attribute.t)
+    (* Create a dense array attribute with the given elements. *)
+    let dense_bool_arr =
+      foreign
+        "mlirDenseBoolArrayGet"
+        (Typs.Context.t @-> intptr_t @-> ptr int @-> returning Typs.Attribute.t)
 
 
-      let uint64_splat_get =
-        foreign
-          "mlirDenseElementsAttrUInt64SplatGet"
-          (Typs.Type.t @-> uint64_t @-> returning Typs.Attribute.t)
+    let dense_int8_arr =
+      foreign
+        "mlirDenseI8ArrayGet"
+        (Typs.Context.t @-> intptr_t @-> ptr int8_t @-> returning Typs.Attribute.t)
 
 
-      let int64_splat_get =
-        foreign
-          "mlirDenseElementsAttrInt64SplatGet"
-          (Typs.Type.t @-> int64_t @-> returning Typs.Attribute.t)
+    let dense_int16_arr =
+      foreign
+        "mlirDenseI16ArrayGet"
+        (Typs.Context.t @-> intptr_t @-> ptr int16_t @-> returning Typs.Attribute.t)
 
 
-      let float_splat_get =
-        foreign
-          "mlirDenseElementsAttrFloatSplatGet"
-          (Typs.Type.t @-> float @-> returning Typs.Attribute.t)
+    let dense_int32_arr =
+      foreign
+        "mlirDenseI32ArrayGet"
+        (Typs.Context.t @-> intptr_t @-> ptr int32_t @-> returning Typs.Attribute.t)
 
 
-      let double_splat_get =
-        foreign
-          "mlirDenseElementsAttrDoubleSplatGet"
-          (Typs.Type.t @-> double @-> returning Typs.Attribute.t)
+    let dense_int64_arr =
+      foreign
+        "mlirDenseI64ArrayGet"
+        (Typs.Context.t @-> intptr_t @-> ptr int64_t @-> returning Typs.Attribute.t)
 
 
-      (* Creates a dense elements attribute with the given shaped type from elements
-       * of a specific type. Expects the element type of the shaped type to match the
-       * data element type. *)
-      let bool_get =
-        foreign
-          "mlirDenseElementsAttrBoolGet"
-          (Typs.Type.t @-> intptr_t @-> ptr int @-> returning Typs.Attribute.t)
+    let dense_float_arr =
+      foreign
+        "mlirDenseF32ArrayGet"
+        (Typs.Context.t @-> intptr_t @-> ptr float @-> returning Typs.Attribute.t)
 
 
-      let uint32_get =
-        foreign
-          "mlirDenseElementsAttrUInt32Get"
-          (Typs.Type.t @-> intptr_t @-> ptr uint32_t @-> returning Typs.Attribute.t)
+    let dense_double_arr =
+      foreign
+        "mlirDenseF64ArrayGet"
+        (Typs.Context.t @-> intptr_t @-> ptr double @-> returning Typs.Attribute.t)
 
 
-      let int32_get =
-        foreign
-          "mlirDenseElementsAttrInt32Get"
-          (Typs.Type.t @-> intptr_t @-> ptr int32_t @-> returning Typs.Attribute.t)
+    (* Get the size of a dense array *)
+    let num_elements =
+      foreign "mlirDenseArrayGetNumElements" (Typs.Attribute.t @-> returning intptr_t)
 
 
-      let uint64_get =
-        foreign
-          "mlirDenseElementsAttrUInt64Get"
-          (Typs.Type.t @-> intptr_t @-> ptr uint64_t @-> returning Typs.Attribute.t)
+    (*  Get an element of a dense array. *)
+    let dense_bool_arr_element =
+      foreign
+        "mlirDenseBoolArrayGetElement"
+        (Typs.Attribute.t @-> intptr_t @-> returning bool)
 
 
-      let int64_get =
-        foreign
-          "mlirDenseElementsAttrInt64Get"
-          (Typs.Type.t @-> intptr_t @-> ptr int64_t @-> returning Typs.Attribute.t)
+    let dense_int8_arr_element =
+      foreign
+        "mlirDenseI8ArrayGetElement"
+        (Typs.Attribute.t @-> intptr_t @-> returning int8_t)
 
 
-      let float_get =
-        foreign
-          "mlirDenseElementsAttrFloatGet"
-          (Typs.Type.t @-> intptr_t @-> ptr float @-> returning Typs.Attribute.t)
+    let dense_int16_arr_element =
+      foreign
+        "mlirDenseI8ArrayGetElement"
+        (Typs.Attribute.t @-> intptr_t @-> returning int16_t)
 
 
-      let double_get =
-        foreign
-          "mlirDenseElementsAttrDoubleGet"
-          (Typs.Type.t @-> intptr_t @-> ptr double @-> returning Typs.Attribute.t)
+    let dense_int32_arr_element =
+      foreign
+        "mlirDenseI32ArrayGetElement"
+        (Typs.Attribute.t @-> intptr_t @-> returning int32_t)
 
 
-      (* Creates a dense elements attribute with the given shaped type from string
-       * elements. *)
-      let string_get =
-        foreign
-          "mlirDenseElementsAttrStringGet"
-          (Typs.Type.t
-          @-> intptr_t
-          @-> ptr Typs.StringRef.t
-          @-> returning Typs.Attribute.t)
+    let dense_int64_arr_element =
+      foreign
+        "mlirDenseI64ArrayGetElement"
+        (Typs.Attribute.t @-> intptr_t @-> returning int64_t)
 
 
-      (* Creates a dense elements attribute that has the same data as the given dense
-       * elements attribute and a different shaped type. The new type must have the
-       * same total number of elements. *)
-      let reshape_get =
-        foreign
-          "mlirDenseElementsAttrReshapeGet"
-          (Typs.Attribute.t @-> Typs.Type.t @-> returning Typs.Attribute.t)
+    let dense_float_arr_element =
+      foreign
+        "mlirDenseF32ArrayGetElement"
+        (Typs.Attribute.t @-> intptr_t @-> returning float)
 
 
-      (* Checks whether the given dense elements attribute contains a single
-       * replicated value (splat). *)
-      let is_splat =
-        foreign "mlirDenseElementsAttrIsSplat" (Typs.Attribute.t @-> returning bool)
+    let dense_double_arr_element =
+      foreign
+        "mlirDenseF64ArrayGetElement"
+        (Typs.Attribute.t @-> intptr_t @-> returning double)
+  end
 
+  (*===----------------------------------------------------------------------===
+   * Dense elements attribute.
+   *===----------------------------------------------------------------------===*)
 
-      (* Returns the single replicated value (splat) of a specific type contained by
-       * the given dense elements attribute. *)
-      let splat_value =
-        foreign
-          "mlirDenseElementsAttrGetSplatValue"
-          (Typs.Attribute.t @-> returning Typs.Attribute.t)
+  module Dense = struct
+    (* TODO: decide on the interface and add support for complex elements. *)
+    (* TODO: add support for APFloat and APInt to LLVM IR C API, then expose the
+     * relevant functions here. *)
 
+    (* Checks whether the given attribute is a dense elements attribute. *)
+    let is_dense =
+      foreign "mlirAttributeIsADenseElements" (Typs.Attribute.t @-> returning bool)
 
-      let bool_splat_value =
-        foreign
-          "mlirDenseElementsAttrGetBoolSplatValue"
-          (Typs.Attribute.t @-> returning int)
 
+    let is_dense_int =
+      foreign "mlirAttributeIsADenseIntElements" (Typs.Attribute.t @-> returning bool)
 
-      let int32_splat_value =
-        foreign
-          "mlirDenseElementsAttrGetInt32SplatValue"
-          (Typs.Attribute.t @-> returning int32_t)
 
+    let is_dense_fpe =
+      foreign "mlirAttributeIsADenseFPElements" (Typs.Attribute.t @-> returning bool)
 
-      let uint32_splat_value =
-        foreign
-          "mlirDenseElementsAttrGetUInt32SplatValue"
-          (Typs.Attribute.t @-> returning uint32_t)
 
+    (* Creates a dense elements attribute with the given Shaped type and elements
+     * in the same context as the type. *)
+    let get =
+      foreign
+        "mlirDenseElementsAttrGet"
+        (Typs.Type.t @-> intptr_t @-> ptr Typs.Attribute.t @-> returning Typs.Attribute.t)
 
-      let int64_splat_value =
-        foreign
-          "mlirDenseElementsAttrGetInt64SplatValue"
-          (Typs.Attribute.t @-> returning int64_t)
 
+    (* Creates a dense elements attribute with the given Shaped type and elements
+       populated from a packed, row-major opaque buffer of contents.
 
-      let uint64_splat_value =
-        foreign
-          "mlirDenseElementsAttrGetUInt64SplatValue"
-          (Typs.Attribute.t @-> returning uint64_t)
+       The format of the raw buffer is a densely packed array of values that
+       can be bitcast to the storage format of the element type specified.
+       Types that are not byte aligned will be:
+       - For bitwidth > 1: Rounded up to the next byte.
+       - For bitwidth = 1: Packed into 8bit bytes with bits corresponding to
+         the linear order of the shape type from MSB to LSB, padded to on the
+         right.
 
+       A raw buffer of a single element (or for 1-bit, a byte of value 0 or 255)
+       will be interpreted as a splat. User code should be prepared for additional,
+       conformant patterns to be identified as splats in the future. *)
+    let raw_buffer =
+      foreign
+        "mlirDenseElementsAttrRawBufferGet"
+        (Typs.Type.t @-> size_t @-> ptr void @-> returning Typs.Attribute.t)
 
-      let float_splat_value =
-        foreign
-          "mlirDenseElementsAttrGetFloatSplatValue"
-          (Typs.Attribute.t @-> returning float)
 
+    (* Creates a dense elements attribute with the given Shaped type containing a
+     * single replicated element (splat). *)
+    let splat_get =
+      foreign
+        "mlirDenseElementsAttrSplatGet"
+        (Typs.Type.t @-> Typs.Attribute.t @-> returning Typs.Attribute.t)
 
-      let double_splat_value =
-        foreign
-          "mlirDenseElementsAttrGetDoubleSplatValue"
-          (Typs.Attribute.t @-> returning double)
 
+    let bool_splat_get =
+      foreign
+        "mlirDenseElementsAttrBoolSplatGet"
+        (Typs.Type.t @-> bool @-> returning Typs.Attribute.t)
 
-      (* Returns the pos-th value (flat contiguous indexing) of a specific type
-       * contained by the given dense elements attribute. *)
-      let bool_value =
-        foreign
-          "mlirDenseElementsAttrGetBoolValue"
-          (Typs.Attribute.t @-> intptr_t @-> returning bool)
 
+    let uint8_splat_get =
+      foreign
+        "mlirDenseElementsAttrUInt8SplatGet"
+        (Typs.Type.t @-> uint8_t @-> returning Typs.Attribute.t)
 
-      let int32_value =
-        foreign
-          "mlirDenseElementsAttrGetInt32Value"
-          (Typs.Attribute.t @-> intptr_t @-> returning int32_t)
 
+    let int8_splat_get =
+      foreign
+        "mlirDenseElementsAttrInt8SplatGet"
+        (Typs.Type.t @-> int8_t @-> returning Typs.Attribute.t)
 
-      let uint32_value =
-        foreign
-          "mlirDenseElementsAttrGetUInt32Value"
-          (Typs.Attribute.t @-> intptr_t @-> returning uint32_t)
 
+    let uint32_splat_get =
+      foreign
+        "mlirDenseElementsAttrUInt32SplatGet"
+        (Typs.Type.t @-> uint32_t @-> returning Typs.Attribute.t)
 
-      let int64_value =
-        foreign
-          "mlirDenseElementsAttrGetInt64Value"
-          (Typs.Attribute.t @-> intptr_t @-> returning int64_t)
 
+    let int32_splat_get =
+      foreign
+        "mlirDenseElementsAttrInt32SplatGet"
+        (Typs.Type.t @-> int32_t @-> returning Typs.Attribute.t)
 
-      let uint64_value =
-        foreign
-          "mlirDenseElementsAttrGetUInt64Value"
-          (Typs.Attribute.t @-> intptr_t @-> returning uint64_t)
 
+    let uint64_splat_get =
+      foreign
+        "mlirDenseElementsAttrUInt64SplatGet"
+        (Typs.Type.t @-> uint64_t @-> returning Typs.Attribute.t)
 
-      let float_value =
-        foreign
-          "mlirDenseElementsAttrGetFloatValue"
-          (Typs.Attribute.t @-> intptr_t @-> returning float)
 
+    let int64_splat_get =
+      foreign
+        "mlirDenseElementsAttrInt64SplatGet"
+        (Typs.Type.t @-> int64_t @-> returning Typs.Attribute.t)
 
-      let double_value =
-        foreign
-          "mlirDenseElementsAttrGetDoubleValue"
-          (Typs.Attribute.t @-> intptr_t @-> returning double)
 
+    let float_splat_get =
+      foreign
+        "mlirDenseElementsAttrFloatSplatGet"
+        (Typs.Type.t @-> float @-> returning Typs.Attribute.t)
 
-      let string_value =
-        foreign
-          "mlirDenseElementsAttrGetStringValue"
-          (Typs.Attribute.t @-> intptr_t @-> returning Typs.StringRef.t)
 
+    let double_splat_get =
+      foreign
+        "mlirDenseElementsAttrDoubleSplatGet"
+        (Typs.Type.t @-> double @-> returning Typs.Attribute.t)
 
-      (* Returns the raw data of the given dense elements attribute. *)
-      let raw_data =
-        foreign
-          "mlirDenseElementsAttrGetRawData"
-          (Typs.Attribute.t @-> returning (ptr void))
-    end
 
-    (*===----------------------------------------------------------------------===
-     * Opaque elements attribute.
-     *===----------------------------------------------------------------------===*)
-    module Opaque = struct
-      (* TODO: expose Dialect to the bindings and implement accessors here. *)
+    (* Creates a dense elements attribute with the given shaped type from elements
+     * of a specific type. Expects the element type of the shaped type to match the
+     * data element type. *)
+    let bool_get =
+      foreign
+        "mlirDenseElementsAttrBoolGet"
+        (Typs.Type.t @-> intptr_t @-> ptr int @-> returning Typs.Attribute.t)
 
-      (* Checks whether the given attribute is an opaque elements attribute. *)
-      let is_opaque =
-        foreign "mlirAttributeIsAOpaqueElements" (Typs.Attribute.t @-> returning bool)
-    end
 
-    (*===----------------------------------------------------------------------===
-     * Sparse elements attribute.
-     *===----------------------------------------------------------------------===*)
-    module Sparse = struct
-      (* Checks whether the given attribute is a sparse elements attribute. *)
-      let is_sparse =
-        foreign "mlirAttributeIsASparseElements" (Typs.Attribute.t @-> returning bool)
+    let uint8_get =
+      foreign
+        "mlirDenseElementsAttrUInt8Get"
+        (Typs.Type.t @-> intptr_t @-> ptr uint8_t @-> returning Typs.Attribute.t)
 
 
-      (* Creates a sparse elements attribute of the given shape from a list of
-       * indices and a list of associated values. Both lists are expected to be dense
-       * elements attributes with the same number of elements. The list of indices is
-       * expected to contain 64-bit integers. The attribute is created in the same
-       * context as the type. *)
-      let create =
-        foreign
-          "mlirSparseElementsAttribute"
-          (Typs.Type.t
-          @-> Typs.Attribute.t
-          @-> Typs.Attribute.t
-          @-> returning Typs.Attribute.t)
+    let int8_get =
+      foreign
+        "mlirDenseElementsAttrInt8Get"
+        (Typs.Type.t @-> intptr_t @-> ptr int8_t @-> returning Typs.Attribute.t)
 
 
-      (* Returns the dense elements attribute containing 64-bit integer indices of
-       * non-null elements in the given sparse elements attribute. *)
-      let indices =
-        foreign
-          "mlirSparseElementsAttrGetIndices"
-          (Typs.Attribute.t @-> returning Typs.Attribute.t)
+    let uint16_get =
+      foreign
+        "mlirDenseElementsAttrUInt16Get"
+        (Typs.Type.t @-> intptr_t @-> ptr uint16_t @-> returning Typs.Attribute.t)
 
 
-      (* Returns the dense elements attribute containing the non-null elements in the
-       * given sparse elements attribute. *)
-      let values =
-        foreign
-          "mlirSparseElementsAttrGetValues"
-          (Typs.Attribute.t @-> returning Typs.Attribute.t)
-    end
+    let int16_get =
+      foreign
+        "mlirDenseElementsAttrInt16Get"
+        (Typs.Type.t @-> intptr_t @-> ptr int16_t @-> returning Typs.Attribute.t)
+
+
+    let uint32_get =
+      foreign
+        "mlirDenseElementsAttrUInt32Get"
+        (Typs.Type.t @-> intptr_t @-> ptr uint32_t @-> returning Typs.Attribute.t)
+
+
+    let int32_get =
+      foreign
+        "mlirDenseElementsAttrInt32Get"
+        (Typs.Type.t @-> intptr_t @-> ptr int32_t @-> returning Typs.Attribute.t)
+
+
+    let uint64_get =
+      foreign
+        "mlirDenseElementsAttrUInt64Get"
+        (Typs.Type.t @-> intptr_t @-> ptr uint64_t @-> returning Typs.Attribute.t)
+
+
+    let int64_get =
+      foreign
+        "mlirDenseElementsAttrInt64Get"
+        (Typs.Type.t @-> intptr_t @-> ptr int64_t @-> returning Typs.Attribute.t)
+
+
+    let float_get =
+      foreign
+        "mlirDenseElementsAttrFloatGet"
+        (Typs.Type.t @-> intptr_t @-> ptr float @-> returning Typs.Attribute.t)
+
+
+    let double_get =
+      foreign
+        "mlirDenseElementsAttrDoubleGet"
+        (Typs.Type.t @-> intptr_t @-> ptr double @-> returning Typs.Attribute.t)
+
+
+    let b_float16_get =
+      foreign
+        "mlirDenseElementsAttrBFloat16Get"
+        (Typs.Type.t @-> intptr_t @-> ptr uint16_t @-> returning Typs.Attribute.t)
+
+
+    let float16_get =
+      foreign
+        "mlirDenseElementsAttrBFloat16Get"
+        (Typs.Type.t @-> intptr_t @-> ptr uint16_t @-> returning Typs.Attribute.t)
+
+
+    (* Creates a dense elements attribute with the given shaped type from string
+     * elements. *)
+    let string_get =
+      foreign
+        "mlirDenseElementsAttrStringGet"
+        (Typs.Type.t @-> intptr_t @-> ptr Typs.StringRef.t @-> returning Typs.Attribute.t)
+
+
+    (* Creates a dense elements attribute that has the same data as the given dense
+     * elements attribute and a different shaped type. The new type must have the
+     * same total number of elements. *)
+    let reshape_get =
+      foreign
+        "mlirDenseElementsAttrReshapeGet"
+        (Typs.Attribute.t @-> Typs.Type.t @-> returning Typs.Attribute.t)
+
+
+    (* Checks whether the given dense elements attribute contains a single
+     * replicated value (splat). *)
+    let is_splat =
+      foreign "mlirDenseElementsAttrIsSplat" (Typs.Attribute.t @-> returning bool)
+
+
+    (* Returns the single replicated value (splat) of a specific type contained by
+     * the given dense elements attribute. *)
+    let splat_value =
+      foreign
+        "mlirDenseElementsAttrGetSplatValue"
+        (Typs.Attribute.t @-> returning Typs.Attribute.t)
+
+
+    let bool_splat_value =
+      foreign "mlirDenseElementsAttrGetBoolSplatValue" (Typs.Attribute.t @-> returning int)
+
+
+    let int8_splat_value =
+      foreign
+        "mlirDenseElementsAttrGetInt8SplatValue"
+        (Typs.Attribute.t @-> returning int8_t)
+
+
+    let uint8_splat_value =
+      foreign
+        "mlirDenseElementsAttrGetUInt8SplatValue"
+        (Typs.Attribute.t @-> returning uint8_t)
+
+
+    let int32_splat_value =
+      foreign
+        "mlirDenseElementsAttrGetInt32SplatValue"
+        (Typs.Attribute.t @-> returning int32_t)
+
+
+    let uint32_splat_value =
+      foreign
+        "mlirDenseElementsAttrGetUInt32SplatValue"
+        (Typs.Attribute.t @-> returning uint32_t)
+
+
+    let int64_splat_value =
+      foreign
+        "mlirDenseElementsAttrGetInt64SplatValue"
+        (Typs.Attribute.t @-> returning int64_t)
+
+
+    let uint64_splat_value =
+      foreign
+        "mlirDenseElementsAttrGetUInt64SplatValue"
+        (Typs.Attribute.t @-> returning uint64_t)
+
+
+    let float_splat_value =
+      foreign
+        "mlirDenseElementsAttrGetFloatSplatValue"
+        (Typs.Attribute.t @-> returning float)
+
+
+    let double_splat_value =
+      foreign
+        "mlirDenseElementsAttrGetDoubleSplatValue"
+        (Typs.Attribute.t @-> returning double)
+
+
+    let string_splat_value =
+      foreign
+        "mlirDenseElementsAttrGetStringSplatValue"
+        (Typs.Attribute.t @-> returning Typs.StringRef.t)
+
+
+    (* Returns the pos-th value (flat contiguous indexing) of a specific type
+     * contained by the given dense elements attribute. *)
+    let bool_value =
+      foreign
+        "mlirDenseElementsAttrGetBoolValue"
+        (Typs.Attribute.t @-> intptr_t @-> returning bool)
+
+
+    let int8_value =
+      foreign
+        "mlirDenseElementsAttrGetInt8Value"
+        (Typs.Attribute.t @-> intptr_t @-> returning int8_t)
+
+
+    let uint8_value =
+      foreign
+        "mlirDenseElementsAttrGetUInt8Value"
+        (Typs.Attribute.t @-> intptr_t @-> returning uint8_t)
+
+
+    let int16_value =
+      foreign
+        "mlirDenseElementsAttrGetInt16Value"
+        (Typs.Attribute.t @-> intptr_t @-> returning int16_t)
+
+
+    let uint16_value =
+      foreign
+        "mlirDenseElementsAttrGetUInt16Value"
+        (Typs.Attribute.t @-> intptr_t @-> returning uint16_t)
+
+
+    let int32_value =
+      foreign
+        "mlirDenseElementsAttrGetInt32Value"
+        (Typs.Attribute.t @-> intptr_t @-> returning int32_t)
+
+
+    let uint32_value =
+      foreign
+        "mlirDenseElementsAttrGetUInt32Value"
+        (Typs.Attribute.t @-> intptr_t @-> returning uint32_t)
+
+
+    let int64_value =
+      foreign
+        "mlirDenseElementsAttrGetInt64Value"
+        (Typs.Attribute.t @-> intptr_t @-> returning int64_t)
+
+
+    let uint64_value =
+      foreign
+        "mlirDenseElementsAttrGetUInt64Value"
+        (Typs.Attribute.t @-> intptr_t @-> returning uint64_t)
+
+
+    let float_value =
+      foreign
+        "mlirDenseElementsAttrGetFloatValue"
+        (Typs.Attribute.t @-> intptr_t @-> returning float)
+
+
+    let double_value =
+      foreign
+        "mlirDenseElementsAttrGetDoubleValue"
+        (Typs.Attribute.t @-> intptr_t @-> returning double)
+
+
+    let string_value =
+      foreign
+        "mlirDenseElementsAttrGetStringValue"
+        (Typs.Attribute.t @-> intptr_t @-> returning Typs.StringRef.t)
+
+
+    (* Returns the raw data of the given dense elements attribute. *)
+    let raw_data =
+      foreign "mlirDenseElementsAttrGetRawData" (Typs.Attribute.t @-> returning (ptr void))
+  end
+
+  (*===----------------------------------------------------------------------===
+   * Resource blob attributes.
+   *===----------------------------------------------------------------------===*)
+
+  module Resource = struct
+    let unmanaged_bool =
+      foreign
+        "mlirUnmanagedDenseBoolResourceElementsAttr"
+        (Typs.Type.t
+         @-> Typs.StringRef.t
+         @-> intptr_t
+         @-> ptr int
+         @-> returning Typs.Attribute.t)
+
+
+    let unmanaged_uint8 =
+      foreign
+        "mlirUnmanagedDenseUInt8ResourceElementsAttrGet"
+        (Typs.Type.t
+         @-> Typs.StringRef.t
+         @-> intptr_t
+         @-> ptr uint8_t
+         @-> returning Typs.Attribute.t)
+
+
+    let unmanaged_int8 =
+      foreign
+        "mlirUnmanagedDenseInt8ResourceElementsAttrGet"
+        (Typs.Type.t
+         @-> Typs.StringRef.t
+         @-> intptr_t
+         @-> ptr int8_t
+         @-> returning Typs.Attribute.t)
+
+
+    let unmanaged_uint16 =
+      foreign
+        "mlirUnmanagedDenseUInt16ResourceElementsAttrGet"
+        (Typs.Type.t
+         @-> Typs.StringRef.t
+         @-> intptr_t
+         @-> ptr uint16_t
+         @-> returning Typs.Attribute.t)
+
+
+    let unmanaged_int16 =
+      foreign
+        "mlirUnmanagedDenseInt16ResourceElementsAttrGet"
+        (Typs.Type.t
+         @-> Typs.StringRef.t
+         @-> intptr_t
+         @-> ptr int16_t
+         @-> returning Typs.Attribute.t)
+
+
+    let unmanaged_uint32 =
+      foreign
+        "mlirUnmanagedDenseUInt32ResourceElementsAttrGet"
+        (Typs.Type.t
+         @-> Typs.StringRef.t
+         @-> intptr_t
+         @-> ptr uint32_t
+         @-> returning Typs.Attribute.t)
+
+
+    let unmanaged_int32 =
+      foreign
+        "mlirUnmanagedDenseInt32ResourceElementsAttrGet"
+        (Typs.Type.t
+         @-> Typs.StringRef.t
+         @-> intptr_t
+         @-> ptr int32_t
+         @-> returning Typs.Attribute.t)
+
+
+    let unmanaged_uint64 =
+      foreign
+        "mlirUnmanagedDenseUInt64ResourceElementsAttrGet"
+        (Typs.Type.t
+         @-> Typs.StringRef.t
+         @-> intptr_t
+         @-> ptr uint64_t
+         @-> returning Typs.Attribute.t)
+
+
+    let unmanaged_int64 =
+      foreign
+        "mlirUnmanagedDenseInt64ResourceElementsAttrGet"
+        (Typs.Type.t
+         @-> Typs.StringRef.t
+         @-> intptr_t
+         @-> ptr int64_t
+         @-> returning Typs.Attribute.t)
+
+
+    let unmanaged_float =
+      foreign
+        "mlirUnmanagedDenseFloatResourceElementsAttrGet"
+        (Typs.Type.t
+         @-> Typs.StringRef.t
+         @-> intptr_t
+         @-> ptr float
+         @-> returning Typs.Attribute.t)
+
+
+    let unmanaged_double =
+      foreign
+        "mlirUnmanagedDenseDoubleResourceElementsAttrGet"
+        (Typs.Type.t
+         @-> Typs.StringRef.t
+         @-> intptr_t
+         @-> ptr double
+         @-> returning Typs.Attribute.t)
+
+
+    let bool_value =
+      foreign
+        "mlirDenseBoolResourceElementsAttrGetValue"
+        (Typs.Attribute.t @-> intptr_t @-> returning bool)
+
+
+    let int8_value =
+      foreign
+        "mlirDenseInt8ResourceElementsAttrGetValue"
+        (Typs.Attribute.t @-> intptr_t @-> returning int8_t)
+
+
+    let uint8_value =
+      foreign
+        "mlirDenseUInt8ResourceElementsAttrGetValue"
+        (Typs.Attribute.t @-> intptr_t @-> returning uint8_t)
+
+
+    let int16_value =
+      foreign
+        "mlirDenseInt16ResourceElementsAttrGetValue"
+        (Typs.Attribute.t @-> intptr_t @-> returning int16_t)
+
+
+    let uint16_value =
+      foreign
+        "mlirDenseUInt16ResourceElementsAttrGetValue"
+        (Typs.Attribute.t @-> intptr_t @-> returning uint16_t)
+
+
+    let int32_value =
+      foreign
+        "mlirDenseInt32ResourceElementsAttrGetValue"
+        (Typs.Attribute.t @-> intptr_t @-> returning int32_t)
+
+
+    let uint32_value =
+      foreign
+        "mlirDenseUInt32ResourceElementsAttrGetValue"
+        (Typs.Attribute.t @-> intptr_t @-> returning uint32_t)
+
+
+    let int64_value =
+      foreign
+        "mlirDenseInt64ResourceElementsAttrGetValue"
+        (Typs.Attribute.t @-> intptr_t @-> returning int64_t)
+
+
+    let uint64_value =
+      foreign
+        "mlirDenseUInt64ResourceElementsAttrGetValue"
+        (Typs.Attribute.t @-> intptr_t @-> returning uint64_t)
+
+
+    let float_value =
+      foreign
+        "mlirDenseFloatResourceElementsAttrGetValue"
+        (Typs.Attribute.t @-> intptr_t @-> returning float)
+
+
+    let double_value =
+      foreign
+        "mlirDenseDoubleResourceElementsAttrGetValue"
+        (Typs.Attribute.t @-> intptr_t @-> returning double)
+  end
+
+  (*===----------------------------------------------------------------------===
+   * Sparse elements attribute.
+   *===----------------------------------------------------------------------===*)
+
+  module Sparse = struct
+    (* Checks whether the given attribute is a sparse elements attribute. *)
+    let is_sparse =
+      foreign "mlirAttributeIsASparseElements" (Typs.Attribute.t @-> returning bool)
+
+
+    (* Creates a sparse elements attribute of the given shape from a list of
+     * indices and a list of associated values. Both lists are expected to be dense
+     * elements attributes with the same number of elements. The list of indices is
+     * expected to contain 64-bit integers. The attribute is created in the same
+     * context as the type. *)
+    let create =
+      foreign
+        "mlirSparseElementsAttribute"
+        (Typs.Type.t
+         @-> Typs.Attribute.t
+         @-> Typs.Attribute.t
+         @-> returning Typs.Attribute.t)
+
+
+    (* Returns the dense elements attribute containing 64-bit integer indices of
+     * non-null elements in the given sparse elements attribute. *)
+    let indices =
+      foreign
+        "mlirSparseElementsAttrGetIndices"
+        (Typs.Attribute.t @-> returning Typs.Attribute.t)
+
+
+    (* Returns the dense elements attribute containing the non-null elements in the
+     * given sparse elements attribute. *)
+    let values =
+      foreign
+        "mlirSparseElementsAttrGetValues"
+        (Typs.Attribute.t @-> returning Typs.Attribute.t)
+  end
+
+  (*===----------------------------------------------------------------------===
+   * Strided layout attribute.
+   *===----------------------------------------------------------------------===*)
+
+  module Strided = struct
+    (* Checks wheather the given attribute is a strided layout attribute. *)
+    let is_strided =
+      foreign "mlirAttributeIsAStridedLayout" (Typs.Attribute.t @-> returning bool)
+
+
+    (* Creates a strided layout attribute from given strides and offset. *)
+    let create =
+      foreign
+        "mlirStridedLayoutAttrGet"
+        (Typs.Context.t
+         @-> int64_t
+         @-> intptr_t
+         @-> ptr int64_t
+         @-> returning Typs.Attribute.t)
+
+
+    (* Returns the offset in the given strided layout layout attribute. *)
+    let offset =
+      foreign "mlirStridedLayoutAttrGetOffset" (Typs.Attribute.t @-> returning int64_t)
+
+
+    (* Returns the number of strides in the given strided layout attribute. *)
+    let num_strides =
+      foreign
+        "mlirStridedLayoutAttrGetNumStrides"
+        (Typs.Attribute.t @-> returning intptr_t)
+
+
+    (* Returns the pos-th stride stored in the given strided layout attribute. *)
+    let stride =
+      foreign
+        "mlirStridedLayoutAttrGetStride"
+        (Typs.Attribute.t @-> intptr_t @-> returning int64_t)
   end
 end
