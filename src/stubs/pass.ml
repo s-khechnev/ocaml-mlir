@@ -9,6 +9,13 @@ module Bindings (F : FOREIGN) = struct
       foreign "mlirPassManagerCreate" (Typs.Context.t @-> returning Typs.PassManager.t)
 
 
+    (* Create a new top-level PassManager anchored on `anchorOp`. *)
+    let create_on_operaion =
+      foreign
+        "mlirPassManagerCreateOnOperation"
+        (Typs.Context.t @-> Typs.StringRef.t @-> returning Typs.PassManager.t)
+
+
     (* Destroy the provided PassManager. *)
     let destroy = foreign "mlirPassManagerDestroy" (Typs.PassManager.t @-> returning void)
 
@@ -27,6 +34,18 @@ module Bindings (F : FOREIGN) = struct
       foreign
         "mlirPassManagerRun"
         (Typs.PassManager.t @-> Typs.Module.t @-> returning Typs.LogicalResult.t)
+
+
+    (* Enable mlir-print-ir-after-all. *)
+    let enable_ir_printing =
+      foreign "mlirPassManagerEnableIRPrinting" (Typs.PassManager.t @-> returning void)
+
+
+    (* Enable / disable verify-each. *)
+    let enable_verifier =
+      foreign
+        "mlirPassManagerEnableVerifier"
+        (Typs.PassManager.t @-> bool @-> returning void)
 
 
     (* Nest an OpPassManager under the top-level PassManager, the nested
@@ -70,8 +89,8 @@ module Bindings (F : FOREIGN) = struct
 
 
     (* Print a textual MLIR pass pipeline by sending chunks of the string
-   * representation and forwarding `userData to `callback`. Note that the callback
-   * may be called several times with consecutive chunks of the string. *)
+       * representation and forwarding `userData to `callback`. Note that the callback
+       * may be called several times with consecutive chunks of the string. *)
     let print_pass_pipeline =
       foreign
         "mlirPrintPassPipeline"
