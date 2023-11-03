@@ -25,6 +25,7 @@ let () =
       ; Printf.(sprintf "-L%s/lib" llvm_build)
       ; Printf.(sprintf "-L%s/tools/mlir/lib" llvm_build) (* ; "-lMLIRPublicAPI" *)
       ; "-lMLIRCAPIIR"
+      ; "-lMLIRCAPIRegisterEverything"
       ]
     in
     let cflags =
