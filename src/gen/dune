@@ -1,10 +1,12 @@
 (executable
  (name gen_types)
+ (public_name gen_types)
  (modules gen_types)
  (libraries mlir.stubs.types ctypes ctypes.stubs))
 
 (executable
  (name gen_stubs)
+ (public_name gen_stubs)
  (modules gen_stubs)
  (libraries mlir.stubs ctypes ctypes.stubs))
 

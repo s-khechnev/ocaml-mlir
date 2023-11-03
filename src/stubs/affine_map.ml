@@ -134,7 +134,7 @@ module Bindings (F : FOREIGN) = struct
 
   (* Returns the result at the given position. *)
   let result =
-    foreign "mlirAffineMapGetResult" (Typs.AffineMap.t @-> intptr_t @-> returning intptr_t)
+    foreign "mlirAffineMapGetResult" (Typs.AffineMap.t @-> intptr_t @-> returning Typs.AffineExpr.t)
 
 
   (* Returns the number of inputs (dimensions + symbols) of the given affine

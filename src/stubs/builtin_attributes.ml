@@ -123,7 +123,7 @@ module Bindings (F : FOREIGN) = struct
     let get_checked =
       foreign
         "mlirFloatAttrDoubleGetChecked"
-        (Typs.Type.t @-> double @-> Typs.Location.t @-> returning Typs.Attribute.t)
+        (Typs.Location.t @-> Typs.Type.t @-> double @-> returning Typs.Attribute.t)
 
 
     (* Returns the value stored in the given floating point attribute, interpreting
@@ -894,7 +894,7 @@ module Bindings (F : FOREIGN) = struct
   module Resource = struct
     let unmanaged_bool =
       foreign
-        "mlirUnmanagedDenseBoolResourceElementsAttr"
+        "mlirUnmanagedDenseBoolResourceElementsAttrGet"
         (Typs.Type.t
          @-> Typs.StringRef.t
          @-> intptr_t

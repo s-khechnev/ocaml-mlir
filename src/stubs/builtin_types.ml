@@ -210,10 +210,10 @@ module Bindings (F : FOREIGN) = struct
     let get_checked =
       foreign
         "mlirVectorTypeGetChecked"
-        (intptr_t
+        (Typs.Location.t
+         @-> intptr_t
          @-> ptr int64_t
          @-> Typs.Type.t
-         @-> Typs.Location.t
          @-> returning Typs.Type.t)
   end
 
@@ -280,7 +280,7 @@ module Bindings (F : FOREIGN) = struct
     let unranked_checked =
       foreign
         "mlirUnrankedTensorTypeGetChecked"
-        (Typs.Type.t @-> Typs.Location.t @-> returning Typs.Type.t)
+        (Typs.Location.t @-> Typs.Type.t @-> returning Typs.Type.t)
   end
 
   (*===----------------------------------------------------------------------===

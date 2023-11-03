@@ -9,6 +9,7 @@ module Bindings (S : Cstubs.Types.TYPE) = struct
 
     let t : t structure typ = structure "MlirTypeID"
     let ptr = field t "ptr" (ptr void)
+    let () = seal t
   end
 
   module TypeIDAllocator = struct
@@ -16,6 +17,7 @@ module Bindings (S : Cstubs.Types.TYPE) = struct
 
     let t : t structure typ = structure "MlirTypeIDAllocator"
     let ptr = field t "ptr" (ptr void)
+    let () = seal t
   end
 
   module StringRef = struct

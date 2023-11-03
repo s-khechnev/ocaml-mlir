@@ -101,6 +101,10 @@ module Bindings (F : FOREIGN) = struct
     let parse_pass_pipeline =
       foreign
         "mlirParsePassPipeline"
-        (Typs.OpPassManager.t @-> Typs.StringRef.t @-> returning Typs.LogicalResult.t)
+        (Typs.OpPassManager.t
+         @-> Typs.StringRef.t
+         @-> Typs.string_callback
+         @-> ptr void
+         @-> returning Typs.LogicalResult.t)
   end
 end

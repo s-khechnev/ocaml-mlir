@@ -64,7 +64,7 @@ module Bindings (F : FOREIGN) = struct
 
     (* Set threading mode (must be set to false to mlir-print-ir-after-all). *)
     let enable_multithreading =
-      foreign "mlirContextEnableMultithreading" (t @-> Typs.StringRef.t @-> returning void)
+      foreign "mlirContextEnableMultithreading" (t @-> bool @-> returning void)
 
 
     (* Eagerly loads all available dialects registered with a context, making
@@ -195,11 +195,7 @@ module Bindings (F : FOREIGN) = struct
     let fused =
       foreign
         "mlirLocationFusedGet"
-        (Typs.Context.t
-         @-> intptr_t
-         @-> ptr t
-         @-> Typs.Attribute.t
-         @-> returning Typs.Attribute.t)
+        (Typs.Context.t @-> intptr_t @-> ptr t @-> Typs.Attribute.t @-> returning t)
 
 
     (* Creates a name location owned by the given context. Providing null location
@@ -325,7 +321,7 @@ module Bindings (F : FOREIGN) = struct
        mlirOperationCreate() call is failable: it will return a null operation
        on inference failure and will emit diagnostics. *)
     let enable_result_type_inference =
-      foreign "mlirOperationStateEnableResultTypeInference" (t @-> returning void)
+      foreign "mlirOperationStateEnableResultTypeInference" (ptr t @-> returning void)
   end
 
   (*===----------------------------------------------------------------------===
@@ -358,7 +354,7 @@ module Bindings (F : FOREIGN) = struct
        'prettyForm' is set to true, debug information is printed in a more readable
        'pretty' form. Note: The IR generated with 'prettyForm' is not parsable. *)
     let enable_debug_info =
-      foreign "mlirOpPrintingFlagsEnableDebugInfo" (t @-> bool @-> returning void)
+      foreign "mlirOpPrintingFlagsEnableDebugInfo" (t @-> bool @-> bool @-> returning void)
 
 
     (* Always print operations in the generic form. *)
@@ -680,7 +676,9 @@ module Bindings (F : FOREIGN) = struct
     (* Creates a new empty block with the given argument types and transfers
        ownership to the caller. *)
     let create =
-      foreign "mlirBlockCreate" (intptr_t @-> ptr Typs.Type.t @-> returning Typs.Block.t)
+      foreign
+        "mlirBlockCreate"
+        (intptr_t @-> ptr Typs.Type.t @-> ptr Typs.Location.t @-> returning Typs.Block.t)
 
 
     (* Takes a block owned by the caller and destroys it. *)
@@ -966,7 +964,7 @@ module Bindings (F : FOREIGN) = struct
     let name =
       foreign
         "mlirNamedAttributeGet"
-        (Typs.StringRef.t @-> Typs.Attribute.t @-> returning Typs.NamedAttribute.t)
+        (Typs.Identifier.t @-> Typs.Attribute.t @-> returning Typs.NamedAttribute.t)
   end
 
   (* Identifier API *)

@@ -17,6 +17,8 @@ type mlnamed_attr = Typs.NamedAttribute.t structured
 type mlpass = Typs.Pass.t structured
 type mlpm = Typs.PassManager.t structured
 type mlop_pm = Typs.OpPassManager.t structured
+type mlident = Typs.Identifier.t structured
+type mlaffine_expr = Typs.AffineExpr.t structured
 
 module StringRef = Bindings.StringRef
 
@@ -79,9 +81,7 @@ module IR = struct
       print x callback null
 
 
-    let name s attr =
-      let s = StringRef.of_string s in
-      name s attr
+    let name id attr = name id attr
   end
 
   module OperationState = struct
@@ -146,10 +146,10 @@ module IR = struct
   module Block = struct
     include Bindings.Block
 
-    let create typs =
+    let create typs loc =
       let size = List.length typs |> Intptr.of_int in
       let typs = CArray.(start (of_list Typs.Type.t typs)) in
-      Bindings.Block.create size typs
+      Bindings.Block.create size typs (Ctypes.allocate Typs.Location.t loc)
 
 
     let argument x pos =
@@ -214,7 +214,15 @@ module AffineMap = struct
 
   include Bindings.AffineMap
 
-  let get ctx i j = get ctx Intptr.(of_int i) Intptr.(of_int j)
+  let get ctx i j k expr =
+    get
+      ctx
+      Intptr.(of_int i)
+      Intptr.(of_int j)
+      Intptr.(of_int k)
+      (Ctypes.allocate Typs.AffineExpr.t expr)
+
+
   let constant ctx i = constant ctx Int64.(of_int i)
 
   let permutation ctx perm =
@@ -251,11 +259,11 @@ module AffineMap = struct
     print x callback null
 end
 
-module StandardDialect = struct
-  include Bindings.StandardDialect
+(* module StandardDialect = struct
+   include Bindings.StandardDialect
 
-  let namespace () = namespace () |> StringRef.to_string
-end
+   let namespace () = namespace () |> StringRef.to_string
+   end *)
 
 module PassManager = struct
   include Bindings.PassManager
@@ -274,8 +282,10 @@ module OpPassManager = struct
     print_pass_pipeline x callback null
 
 
-  let parse_pass_pipeline pm s =
-    parse_pass_pipeline pm StringRef.(of_string s) |> Bindings.LogicalResult.is_success
+  let parse_pass_pipeline pm s ~callback =
+    let callback s _ = callback (StringRef.to_string s) in
+    parse_pass_pipeline pm StringRef.(of_string s) callback null
+    |> Bindings.LogicalResult.is_success
 end
 
 module BuiltinTypes = struct
@@ -305,74 +315,66 @@ module BuiltinTypes = struct
       get Intptr.(of_int n) shp typ
 
 
-    let get_checked shp typ loc =
-      let n = Array.length shp in
+    let get_checked loc rank shp typ =
       let shp =
         let shp = shp |> Array.map Int64.of_int |> Array.to_list in
         CArray.(start (of_list int64_t shp))
       in
-      get_checked Intptr.(of_int n) shp typ loc
+      get_checked loc Intptr.(of_int rank) shp typ
   end
 
   module Tensor = struct
     include Bindings.BuiltinTypes.Tensor
 
-    let ranked shp typ =
-      let n = Array.length shp in
+    let ranked rank shp typ attr =
       let shp =
         let shp = shp |> Array.map Int64.of_int |> Array.to_list in
         CArray.(start (of_list int64_t shp))
       in
-      ranked Intptr.(of_int n) shp typ
+      ranked Intptr.(of_int rank) shp typ attr
 
 
-    let ranked_checked shp typ loc =
-      let n = Array.length shp in
+    let ranked_checked loc rank shp typ encoding =
       let shp =
         let shp = shp |> Array.map Int64.of_int |> Array.to_list in
         CArray.(start (of_list int64_t shp))
       in
-      ranked_checked Intptr.(of_int n) shp typ loc
+      ranked_checked loc Intptr.(of_int rank) shp typ encoding
   end
 
   module MemRef = struct
     include Bindings.BuiltinTypes.MemRef
 
-    let get typ shape affmaps memspace =
-      let rank = Array.length shape |> Intptr.of_int in
+    let get typ rank shape layout memspace =
       let shape =
         let shp = shape |> Array.map Int64.of_int |> Array.to_list in
         CArray.(start (of_list int64_t shp))
       in
-      let n = List.length affmaps |> Intptr.of_int in
-      let affmaps = CArray.(start (of_list Typs.AffineMap.t affmaps)) in
-      get typ rank shape n affmaps Unsigned.UInt.(of_int memspace)
+      get typ Intptr.(of_int rank) shape layout memspace
 
 
-    let contiguous typ shape memspace =
-      let rank = Array.length shape |> Intptr.of_int in
+    let contiguous typ rank shape memspace =
       let shape =
         let shp = shape |> Array.map Int64.of_int |> Array.to_list in
         CArray.(start (of_list int64_t shp))
       in
-      contiguous typ rank shape Unsigned.UInt.(of_int memspace)
+      contiguous typ Intptr.(of_int rank) shape memspace
 
 
-    let contiguous_checked typ shape memspace loc =
-      let rank = Array.length shape |> Intptr.of_int in
+    let contiguous_checked typ rank shape memspace loc =
       let shape =
         let shp = shape |> Array.map Int64.of_int |> Array.to_list in
         CArray.(start (of_list int64_t shp))
       in
-      contiguous_checked typ rank shape Unsigned.UInt.(of_int memspace) loc
+      contiguous_checked loc typ Intptr.(of_int rank) shape memspace
 
 
-    let unranked typ i = unranked typ Unsigned.UInt.(of_int i)
-    let unranked_checked typ i loc = unranked_checked typ Unsigned.UInt.(of_int i) loc
-    let num_affine_maps typ = num_affine_maps typ |> Intptr.to_int
-    let affine_map typ i = affine_map typ Intptr.(of_int i)
-    let memory_space typ = memory_space typ |> Unsigned.UInt.to_int
-    let unranked_memory_space typ = unranked_memory_space typ |> Unsigned.UInt.to_int
+    let unranked typ memspace = unranked typ memspace
+    let unranked_checked loc typ memspace = unranked_checked loc typ memspace
+    (* let num_affine_maps typ = num_affine_maps typ |> Intptr.to_int
+       let affine_map typ i = affine_map typ Intptr.(of_int i)
+       let memory_space typ = memory_space typ |> Unsigned.UInt.to_int
+       let unranked_memory_space typ = unranked_memory_space typ |> Unsigned.UInt.to_int *)
   end
 
   module Tuple = struct
@@ -442,7 +444,7 @@ module BuiltinAttributes = struct
     include Bindings.BuiltinAttributes.Integer
 
     let get x i = get x Int64.(of_int i)
-    let value x = value x |> Int64.to_int
+    let value x = value_int x |> Int64.to_int
   end
 
   module Bool = Bindings.BuiltinAttributes.Bool
@@ -517,11 +519,11 @@ module BuiltinAttributes = struct
 
     let num_elements attrs = num_elements attrs |> Intptr.to_int
 
-    module Sparse = Bindings.BuiltinAttributes.Elements.Sparse
-    module Opaque = Bindings.BuiltinAttributes.Elements.Opaque
+    module Sparse = Bindings.BuiltinAttributes.Sparse
+    module Opaque = Bindings.BuiltinAttributes.Opaque
 
     module Dense = struct
-      include Bindings.BuiltinAttributes.Elements.Dense
+      include Bindings.BuiltinAttributes.Dense
 
       let get attr xs =
         let size = List.length xs |> Intptr.of_int in
@@ -568,7 +570,7 @@ module BuiltinAttributes = struct
   end
 end
 
-module Transforms = Bindings.Transforms
+(* module Transforms = Bindings.Transforms *)
 
 let register_all_dialects = Bindings.register_all_dialects
 

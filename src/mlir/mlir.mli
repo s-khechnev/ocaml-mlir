@@ -43,6 +43,12 @@ type mlpm
 (** MLIR Op Pass Manager *)
 type mlop_pm
 
+(** MLIR Identifier *)
+type mlident
+
+(** MLIR Affine expr *)
+type mlaffine_expr
+
 module IR : sig
   module Context : sig
     (** Creates an MLIR context and transfers its ownership to the caller. *)
@@ -170,7 +176,7 @@ module IR : sig
     val dump : mlattr -> unit
 
     (** Associates an attribute with the name. Takes ownership of neither. *)
-    val name : string -> mlattr -> mlnamed_attr
+    val name : mlident -> mlattr -> mlnamed_attr
   end
 
   module OperationState : sig
@@ -250,7 +256,7 @@ module IR : sig
 
   module Block : sig
     (** Creates a new empty block with the given argument types and transfers ownership to the caller. *)
-    val create : mltype list -> mlblock
+    val create : mltype list -> mllocation -> mlblock
 
     (** Takes a block owned by the caller and destroys it. *)
     val destroy : mlblock -> unit
@@ -420,7 +426,7 @@ module AffineMap : sig
   val empty : mlcontext -> t
 
   (** Creates a zero result affine map of the given dimensions and symbols in the context. The affine map is owned by the context. *)
-  val get : mlcontext -> int -> int -> t
+  val get : mlcontext -> int -> int -> int -> mlaffine_expr -> t
 
   (** Creates a single constant result affine map in the context. The affine map is owned by the context. *)
   val constant : mlcontext -> int -> t
@@ -447,7 +453,7 @@ module AffineMap : sig
   val is_single_constant : t -> bool
 
   (** Returns the constant result of the given affine map. The function asserts
-   * that the map has a single constant result. *)
+      * that the map has a single constant result. *)
   val single_constant_result : t -> int
 
   (** Returns the number of dimensions of the given affine map. *)
@@ -566,7 +572,7 @@ module BuiltinTypes : sig
     val get : int array -> mltype -> mltype
 
     (** Same as "mlirVectorTypeGet" but returns a nullptr wrapping MlirType on illegal arguments, emitting appropriate diagnostics. *)
-    val get_checked : int array -> mltype -> mllocation -> mltype
+    val get_checked : mllocation -> int -> int array -> mltype -> mltype
   end
 
   module Tensor : sig
@@ -580,16 +586,16 @@ module BuiltinTypes : sig
     val is_unranked_tensor : mltype -> bool
 
     (** Creates a tensor type of a fixed rank with the given shape and element type in the same context as the element type. The type is owned by the context. *)
-    val ranked : int array -> mltype -> mltype
+    val ranked : int -> int array -> mltype -> mlattr -> mltype
 
     (** Same as "mlirRankedTensorTypeGet" but returns a nullptr wrapping MlirType on illegal arguments, emitting appropriate diagnostics. *)
-    val ranked_checked : int array -> mltype -> mllocation -> mltype
+    val ranked_checked : mllocation -> int -> int array -> mltype -> mlattr -> mltype
 
     (** Creates an unranked tensor type with the given element type in the same context as the element type. The type is owned by the context. *)
-    val unranked : mltype -> mltype
+    (* val unranked : mltype -> mltype *)
 
     (** Same as "mlirUnrankedTensorTypeGet" but returns a nullptr wrapping MlirType on illegal arguments, emitting appropriate diagnostics. *)
-    val unranked_checked : mltype -> mllocation -> mltype
+    (* val unranked_checked : mltype -> mllocation -> mltype *)
   end
 
   module MemRef : sig
@@ -600,31 +606,31 @@ module BuiltinTypes : sig
     val is_unranked_memref : mltype -> bool
 
     (** Creates a MemRef type with the given rank and shape, a potentially empty list of affine layout maps, the given memory space and element type, in the same context as element type. The type is owned by the context. *)
-    val get : mltype -> int array -> AffineMap.t list -> int -> mltype
+    (* val get : mltype -> int array -> AffineMap.t list -> int -> mltype *)
 
     (** Creates a MemRef type with the given rank, shape, memory space and element type in the same context as the element type. The type has no affine maps, i.e. represents a default row-major contiguous memref. The type is owned by the context. *)
-    val contiguous : mltype -> int array -> int -> mltype
+    (* val contiguous : mltype -> int array -> int -> mltype *)
 
     (** Same as "mlirMemRefTypeContiguousGet" but returns a nullptr wrapping MlirType on illegal arguments, emitting appropriate diagnostics. *)
-    val contiguous_checked : mltype -> int array -> int -> mllocation -> mltype
+    (* val contiguous_checked : mltype -> int array -> int -> mllocation -> mltype *)
 
     (** Creates an Unranked MemRef type with the given element type and in the given memory space. The type is owned by the context of element type. *)
-    val unranked : mltype -> int -> mltype
+    (* val unranked : mltype -> int -> mltype *)
 
     (** Same as "mlirUnrankedMemRefTypeGet" but returns a nullptr wrapping MlirType on illegal arguments, emitting appropriate diagnostics. *)
-    val unranked_checked : mltype -> int -> mllocation -> mltype
+    (* val unranked_checked : mltype -> int -> mllocation -> mltype *)
 
     (** Returns the number of affine layout maps in the given MemRef type. *)
-    val num_affine_maps : mltype -> int
+    (* val num_affine_maps : mltype -> int *)
 
     (** Returns the pos-th affine map of the given MemRef type. *)
-    val affine_map : mltype -> int -> AffineMap.t
+    (* val affine_map : mltype -> int -> AffineMap.t *)
 
     (** Returns the memory space of the given MemRef type. *)
-    val memory_space : mltype -> int
+    (* val memory_space : mltype -> int *)
 
     (** Returns the memory spcae of the given Unranked MemRef type. *)
-    val unranked_memory_space : mltype -> int
+    (* val unranked_memory_space : mltype -> int *)
   end
 
   module Tuple : sig
@@ -715,7 +721,7 @@ module BuiltinAttributes : sig
     val get : mlcontext -> mltype -> float -> mlattr
 
     (** Same as "mlirFloatAttrDoubleGet", but if the type is not valid for a construction of a FloatAttr, returns a null MlirAttribute. *)
-    val get_checked : mltype -> float -> mllocation -> mlattr
+    (* val get_checked : mltype -> float -> mllocation -> mlattr *)
 
     (** Returns the  stored in the given floating point attribute, interpreting the  as double. *)
     val value : mlattr -> float
@@ -934,16 +940,16 @@ module BuiltinAttributes : sig
   end
 end
 
-module StandardDialect : sig
-  (** Registers the Standard dialect with the given context. This allows the dialect to be loaded dynamically if needed when parsing. *)
-  val register_standard_dialect : mlcontext -> unit
+(* module StandardDialect : sig
+   (** Registers the Standard dialect with the given context. This allows the dialect to be loaded dynamically if needed when parsing. *)
+   val register_standard_dialect : mlcontext -> unit
 
-  (** Loads the Standard dialect into the given context. The dialect does _not_ have to be registered in advance. *)
-  val load_standard_dialect : mlcontext -> mldialect
+   (** Loads the Standard dialect into the given context. The dialect does _not_ have to be registered in advance. *)
+   val load_standard_dialect : mlcontext -> mldialect
 
-  (** Returns the namespace of the Standard dialect, suitable for loading it. *)
-  val namespace : unit -> string
-end
+   (** Returns the namespace of the Standard dialect, suitable for loading it. *)
+   val namespace : unit -> string
+   end *)
 
 module PassManager : sig
   (** Create a new top-level PassManager. *)
@@ -979,41 +985,41 @@ module OpPassManager : sig
   val print_pass_pipeline : callback:(string -> unit) -> mlop_pm -> unit
 
   (** Parse a textual MLIR pass pipeline and add it to the provided OpPassManager. *)
-  val parse_pass_pipeline : mlop_pm -> string -> bool
+  (* val parse_pass_pipeline : mlop_pm -> string -> bool *)
 end
 
-module Transforms : sig
-  val register_passes : unit -> unit
+(* module Transforms : sig
+   val register_passes : unit -> unit
 
-  module AffineLoopFusion : Transforms_intf.Sig with type t := mlpass
-  module AffinePipelineDataTransfer : Transforms_intf.Sig with type t := mlpass
-  module BufferDeallocation : Transforms_intf.Sig with type t := mlpass
-  module BufferHoisting : Transforms_intf.Sig with type t := mlpass
-  module BufferLoopHoisting : Transforms_intf.Sig with type t := mlpass
-  module BufferResultsToOutParams : Transforms_intf.Sig with type t := mlpass
-  module CSE : Transforms_intf.Sig with type t := mlpass
-  module Canonicalizer : Transforms_intf.Sig with type t := mlpass
-  module CopyRemoval : Transforms_intf.Sig with type t := mlpass
-  module FinalizingBufferize : Transforms_intf.Sig with type t := mlpass
-  module Inliner : Transforms_intf.Sig with type t := mlpass
-  module LocationSnapshot : Transforms_intf.Sig with type t := mlpass
-  module LoopCoalescing : Transforms_intf.Sig with type t := mlpass
-  module LoopInvariantCodeMotion : Transforms_intf.Sig with type t := mlpass
-  module MemRefDataFlowOpt : Transforms_intf.Sig with type t := mlpass
-  module NormlizeMemRefs : Transforms_intf.Sig with type t := mlpass
-  module ParallelLoopCollapsing : Transforms_intf.Sig with type t := mlpass
-  module PrintCFG : Transforms_intf.Sig with type t := mlpass
-  module PrintOp : Transforms_intf.Sig with type t := mlpass
-  module PrintOpStats : Transforms_intf.Sig with type t := mlpass
-  module PromoteBuffersToStack : Transforms_intf.Sig with type t := mlpass
-  module SCCP : Transforms_intf.Sig with type t := mlpass
-  module StripDebugInfo : Transforms_intf.Sig with type t := mlpass
-  module SymbolDCE : Transforms_intf.Sig with type t := mlpass
-end
+   module AffineLoopFusion : Transforms_intf.Sig with type t := mlpass
+   module AffinePipelineDataTransfer : Transforms_intf.Sig with type t := mlpass
+   module BufferDeallocation : Transforms_intf.Sig with type t := mlpass
+   module BufferHoisting : Transforms_intf.Sig with type t := mlpass
+   module BufferLoopHoisting : Transforms_intf.Sig with type t := mlpass
+   module BufferResultsToOutParams : Transforms_intf.Sig with type t := mlpass
+   module CSE : Transforms_intf.Sig with type t := mlpass
+   module Canonicalizer : Transforms_intf.Sig with type t := mlpass
+   module CopyRemoval : Transforms_intf.Sig with type t := mlpass
+   module FinalizingBufferize : Transforms_intf.Sig with type t := mlpass
+   module Inliner : Transforms_intf.Sig with type t := mlpass
+   module LocationSnapshot : Transforms_intf.Sig with type t := mlpass
+   module LoopCoalescing : Transforms_intf.Sig with type t := mlpass
+   module LoopInvariantCodeMotion : Transforms_intf.Sig with type t := mlpass
+   module MemRefDataFlowOpt : Transforms_intf.Sig with type t := mlpass
+   module NormlizeMemRefs : Transforms_intf.Sig with type t := mlpass
+   module ParallelLoopCollapsing : Transforms_intf.Sig with type t := mlpass
+   module PrintCFG : Transforms_intf.Sig with type t := mlpass
+   module PrintOp : Transforms_intf.Sig with type t := mlpass
+   module PrintOpStats : Transforms_intf.Sig with type t := mlpass
+   module PromoteBuffersToStack : Transforms_intf.Sig with type t := mlpass
+   module SCCP : Transforms_intf.Sig with type t := mlpass
+   module StripDebugInfo : Transforms_intf.Sig with type t := mlpass
+   module SymbolDCE : Transforms_intf.Sig with type t := mlpass
+   end *)
 
 (** Registers all dialects known to core MLIR with the provided Context.
-   This is needed before creating IR for these Dialects. *)
-val register_all_dialects : mlcontext -> unit
+    This is needed before creating IR for these Dialects. *)
+(* val register_all_dialects : mlcontext -> unit *)
 
 (** [with_context f]  creates a context [ctx], applies [f] to it, destroys it and returns the result of applying [f] *)
 val with_context : (mlcontext -> 'a) -> 'a

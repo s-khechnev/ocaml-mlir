@@ -15,6 +15,5 @@ let () =
     Format.fprintf fmt_c "#include \"mlir-c/RegisterEverything.h\"@.";
     Format.fprintf fmt_c "#include \"mlir-c/BuiltinAttributes.h\"@.";
     Format.fprintf fmt_c "#include \"mlir-c/BuiltinTypes.h\"@.";
-    (* Format.fprintf fmt_c "#include \"mlir-c/StandardDialect.h\"@."; *)
     Format.fprintf fmt_c "#include \"mlir-c/Transforms.h\"@.";
     Cstubs.Types.write_c fmt_c (module Types.Bindings))

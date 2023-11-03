@@ -1,3 +1,8 @@
+(env
+ (dev
+  (flags
+   (:standard -warn-error -32-11))))
+
 (library
  (name mlir)
  (public_name mlir)
