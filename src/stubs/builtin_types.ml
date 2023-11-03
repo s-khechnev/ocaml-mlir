@@ -64,6 +64,22 @@ module Bindings (F : FOREIGN) = struct
    *===----------------------------------------------------------------------===*)
 
   module Float = struct
+    (* Checks whether the given type is an f8E5M2 type. *)
+    let is_f8e5m2 = foreign "mlirTypeIsAFloat8E5M2" (Typs.Type.t @-> returning bool)
+
+    (* Creates an f8E5M2 type in the given context. The type is owned by the
+     *  context *)
+    let f8e5m2 = foreign "mlirFloat8E5M2TypeGet" (Typs.Context.t @-> returning Typs.Type.t)
+
+    (* Checks whether the given type is an f8E4M3FN type. *)
+    let is_f8E4M3FN = foreign "mlirTypeIsAFloat8E4M3FN" (Typs.Type.t @-> returning bool)
+
+    (* Creates an f8E4M3FN type in the given context. The type is owned by the
+     * context *)
+    let f8e5m2 =
+      foreign "mlirFloat8E4M3FNTypeGet" (Typs.Context.t @-> returning Typs.Type.t)
+
+
     (* Checks whether the given type is a bf16 type. *)
     let is_bf16 = foreign "mlirTypeIsABF16" (Typs.Type.t @-> returning bool)
 
@@ -164,6 +180,13 @@ module Bindings (F : FOREIGN) = struct
      * and offsets in shaped types. *)
     let is_dynamic_stride_or_offset =
       foreign "mlirShapedTypeIsDynamicStrideOrOffset" (int64_t @-> returning bool)
+
+
+    (* Returns the value indicating a dynamic stride or offset in a shaped type.
+       Prefer mlirShapedTypeGetDynamicStrideOrOffset to direct comparisons with
+       this value. *)
+    let dynamic_stride_or_offset =
+      foreign "mlirShapedTypeGetDynamicStrideOrOffset" (void @-> returning int64_t)
   end
 
   (*===----------------------------------------------------------------------===
@@ -188,10 +211,10 @@ module Bindings (F : FOREIGN) = struct
       foreign
         "mlirVectorTypeGetChecked"
         (intptr_t
-        @-> ptr int64_t
-        @-> Typs.Type.t
-        @-> Typs.Location.t
-        @-> returning Typs.Type.t)
+         @-> ptr int64_t
+         @-> Typs.Type.t
+         @-> Typs.Location.t
+         @-> returning Typs.Type.t)
   end
 
   (*===----------------------------------------------------------------------===
@@ -211,12 +234,18 @@ module Bindings (F : FOREIGN) = struct
       foreign "mlirTypeIsAUnrankedTensor" (Typs.Type.t @-> returning bool)
 
 
-    (* Creates a tensor type of a fixed rank with the given shape and element type
-     * in the same context as the element type. The type is owned by the context. *)
+    (* Creates a tensor type of a fixed rank with the given shape, element type,
+       and optional encoding in the same context as the element type. The type is
+       owned by the context. Tensor types without any specific encoding field
+       should assign mlirAttributeGetNull() to this parameter. *)
     let ranked =
       foreign
         "mlirRankedTensorTypeGet"
-        (intptr_t @-> ptr int64_t @-> Typs.Type.t @-> returning Typs.Type.t)
+        (intptr_t
+         @-> ptr int64_t
+         @-> Typs.Type.t
+         @-> Typs.Attribute.t
+         @-> returning Typs.Type.t)
 
 
     (* Same as "mlirRankedTensorTypeGet" but returns a nullptr wrapping MlirType on
@@ -224,11 +253,20 @@ module Bindings (F : FOREIGN) = struct
     let ranked_checked =
       foreign
         "mlirRankedTensorTypeGetChecked"
-        (intptr_t
-        @-> ptr int64_t
-        @-> Typs.Type.t
-        @-> Typs.Location.t
-        @-> returning Typs.Type.t)
+        (Typs.Location.t
+         @-> intptr_t
+         @-> ptr int64_t
+         @-> Typs.Type.t
+         @-> Typs.Attribute.t
+         @-> returning Typs.Type.t)
+
+
+    (* Gets the 'encoding' attribute from the ranked tensor type, returning a
+     * null attribute if none. *)
+    let ranked_encoding =
+      foreign
+        "mlirRankedTensorTypeGetEncoding"
+        (Typs.Type.t @-> returning Typs.Attribute.t)
 
 
     (* Creates an unranked tensor type with the given element type in the same
@@ -265,12 +303,25 @@ module Bindings (F : FOREIGN) = struct
       foreign
         "mlirMemRefTypeGet"
         (Typs.Type.t
-        @-> intptr_t
-        @-> ptr int64_t
-        @-> intptr_t
-        @-> ptr Typs.AffineMap.t
-        @-> uint
-        @-> returning Typs.Type.t)
+         @-> intptr_t
+         @-> ptr int64_t
+         @-> Typs.Attribute.t
+         @-> Typs.Attribute.t
+         @-> returning Typs.Type.t)
+
+
+    (* Same as "mlirMemRefTypeGet" but returns a nullptr-wrapping MlirType o
+       illegal arguments, emitting appropriate diagnostics. *)
+    let checked =
+      foreign
+        "mlirMemRefTypeGetChecked"
+        (Typs.Location.t
+         @-> Typs.Type.t
+         @-> intptr_t
+         @-> ptr int64_t
+         @-> Typs.Attribute.t
+         @-> Typs.Attribute.t
+         @-> returning Typs.Type.t)
 
 
     (* Creates a MemRef type with the given rank, shape, memory space and element
@@ -280,7 +331,11 @@ module Bindings (F : FOREIGN) = struct
     let contiguous =
       foreign
         "mlirMemRefTypeContiguousGet"
-        (Typs.Type.t @-> intptr_t @-> ptr int64_t @-> uint @-> returning Typs.Type.t)
+        (Typs.Type.t
+         @-> intptr_t
+         @-> ptr int64_t
+         @-> Typs.Attribute.t
+         @-> returning Typs.Type.t)
 
 
     (* Same as "mlirMemRefTypeContiguousGet" but returns a nullptr wrapping
@@ -288,18 +343,20 @@ module Bindings (F : FOREIGN) = struct
     let contiguous_checked =
       foreign
         "mlirMemRefTypeContiguousGetChecked"
-        (Typs.Type.t
-        @-> intptr_t
-        @-> ptr int64_t
-        @-> uint
-        @-> Typs.Location.t
-        @-> returning Typs.Type.t)
+        (Typs.Location.t
+         @-> Typs.Type.t
+         @-> intptr_t
+         @-> ptr int64_t
+         @-> Typs.Attribute.t
+         @-> returning Typs.Type.t)
 
 
     (* Creates an Unranked MemRef type with the given element type and in the given
      * memory space. The type is owned by the context of element type. *)
     let unranked =
-      foreign "mlirUnrankedMemRefTypeGet" (Typs.Type.t @-> uint @-> returning Typs.Type.t)
+      foreign
+        "mlirUnrankedMemRefTypeGet"
+        (Typs.Type.t @-> Typs.Attribute.t @-> returning Typs.Type.t)
 
 
     (* Same as "mlirUnrankedMemRefTypeGet" but returns a nullptr wrapping
@@ -307,29 +364,29 @@ module Bindings (F : FOREIGN) = struct
     let unranked_checked =
       foreign
         "mlirUnrankedMemRefTypeGetChecked"
-        (Typs.Type.t @-> uint @-> Typs.Location.t @-> returning Typs.Type.t)
+        (Typs.Location.t @-> Typs.Type.t @-> Typs.Attribute.t @-> returning Typs.Type.t)
 
 
-    (* Returns the number of affine layout maps in the given MemRef type. *)
-    let num_affine_maps =
-      foreign "mlirMemRefTypeGetNumAffineMaps" (Typs.Type.t @-> returning intptr_t)
+    (* Returns the layout of the given MemRef type. *)
+    let layout =
+      foreign "mlirMemRefTypeGetLayout" (Typs.Type.t @-> returning Typs.Attribute.t)
 
 
-    (* Returns the pos-th affine map of the given MemRef type. *)
+    (* Returns the affine map of the given MemRef type. *)
     let affine_map =
-      foreign
-        "mlirMemRefTypeGetAffineMap"
-        (Typs.Type.t @-> intptr_t @-> returning Typs.AffineMap.t)
+      foreign "mlirMemRefTypeGetAffineMap" (Typs.Type.t @-> returning Typs.AffineMap.t)
 
 
     (* Returns the memory space of the given MemRef type. *)
     let memory_space =
-      foreign "mlirMemRefTypeGetMemorySpace" (Typs.Type.t @-> returning uint)
+      foreign "mlirMemRefTypeGetMemorySpace" (Typs.Type.t @-> returning Typs.Attribute.t)
 
 
     (* Returns the memory spcae of the given Unranked MemRef type. *)
     let unranked_memory_space =
-      foreign "mlirUnrankedMemRefGetMemorySpace" (Typs.Type.t @-> returning uint)
+      foreign
+        "mlirUnrankedMemrefGetMemorySpace"
+        (Typs.Type.t @-> returning Typs.Attribute.t)
   end
 
   (*===----------------------------------------------------------------------===
@@ -368,11 +425,11 @@ module Bindings (F : FOREIGN) = struct
       foreign
         "mlirFunctionTypeGet"
         (Typs.Context.t
-        @-> intptr_t
-        @-> ptr Typs.Type.t
-        @-> intptr_t
-        @-> ptr Typs.Type.t
-        @-> returning Typs.Type.t)
+         @-> intptr_t
+         @-> ptr Typs.Type.t
+         @-> intptr_t
+         @-> ptr Typs.Type.t
+         @-> returning Typs.Type.t)
 
 
     (* Returns the number of input types. *)
@@ -397,5 +454,34 @@ module Bindings (F : FOREIGN) = struct
       foreign
         "mlirFunctionTypeGetResult"
         (Typs.Type.t @-> intptr_t @-> returning Typs.Type.t)
+  end
+
+  module Opaque = struct
+    (* Checks whether the given type is an opaque type. *)
+    let is_opaque = foreign "mlirTypeIsAOpaque" (Typs.Type.t @-> returning bool)
+
+    (* Creates an opaque type in the given context associated with the dialect
+       identified by its namespace. The type contains opaque byte data of the
+       specified length (data need not be null-terminated). *)
+    let get =
+      foreign
+        "mlirOpaqueTypeGet"
+        (Typs.Context.t
+         @-> Typs.StringRef.t
+         @-> Typs.StringRef.t
+         @-> returning Typs.Type.t)
+
+
+    (* Returns the namespace of the dialect with which the given opaque type
+       is associated. The namespace string is owned by the context. *)
+    let dialect_namespace =
+      foreign
+        "mlirOpaqueTypeGetDialectNamespace"
+        (Typs.Type.t @-> returning Typs.StringRef.t)
+
+
+    (* Returns the raw data as a string reference. The data remains live as long as
+       the context in which the type lives. *)
+    let data = foreign "mlirOpaqueTypeGetData" (Typs.Type.t @-> returning Typs.StringRef.t)
   end
 end
