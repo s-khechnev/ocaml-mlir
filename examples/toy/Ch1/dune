@@ -1,0 +1,5 @@
+(executable
+ (public_name toy-ch1)
+ (name main)
+ (libraries base mlir.toy.parser)
+ (modules main))
