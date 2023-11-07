@@ -1,5 +1,34 @@
 (executable
  (public_name toy-ch1)
  (name main)
- (libraries base mlir.toy.parser)
- (modules main))
+ (libraries
+  mlir
+  mlir.toy.parser1
+  ctypes
+  ctypes.foreign
+  mlir.stubs
+  mlir.stubs.types)
+ (modules main)
+ (flags
+  (:standard -cclib %{read:toy_flags})))
+
+(rule
+ (targets toy_flags)
+ (deps libToyCAPI.so libMLIRToy.so)
+ (action
+  (bash
+   "echo \"-Wl,-rpath,`llvm-config-16 --libdir` -Wl,-rpath,`pwd` -L`pwd` -lMLIRToy -lToyCAPI \" > toy_flags")))
+
+(data_only_dirs dialect)
+
+(rule
+ (deps
+  (source_tree dialect)
+  Makefile)
+ (targets libToyCAPI.so libMLIRToy.so)
+ (action
+  (no-infer
+   (progn
+    (run make capi_toy)
+    (copy build/libToyCAPI.so libToyCAPI.so)
+    (copy build/libMLIRToy.so libMLIRToy.so)))))

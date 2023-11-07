@@ -19,6 +19,7 @@ type mlpm = Typs.PassManager.t structured
 type mlop_pm = Typs.OpPassManager.t structured
 type mlident = Typs.Identifier.t structured
 type mlaffine_expr = Typs.AffineExpr.t structured
+type mldialect_handle = Typs.DialectHandle.t structured
 
 module StringRef = Bindings.StringRef
 
@@ -35,6 +36,12 @@ module IR = struct
     include Bindings.Dialect
 
     let namespace dialect = namespace dialect |> StringRef.to_string
+  end
+
+  module DialectHandle = struct
+    include Bindings.DialectHandle
+
+    let register dhandle ctx = register_dialect dhandle ctx
   end
 
   module Type = struct
@@ -258,12 +265,6 @@ module AffineMap = struct
     let callback s _ = callback (StringRef.to_string s) in
     print x callback null
 end
-
-(* module StandardDialect = struct
-   include Bindings.StandardDialect
-
-   let namespace () = namespace () |> StringRef.to_string
-   end *)
 
 module PassManager = struct
   include Bindings.PassManager

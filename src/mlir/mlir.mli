@@ -49,6 +49,9 @@ type mlident
 (** MLIR Affine expr *)
 type mlaffine_expr
 
+(** MLIR Dialect Handle *)
+type mldialect_handle
+
 module IR : sig
   module Context : sig
     (** Creates an MLIR context and transfers its ownership to the caller. *)
@@ -91,6 +94,11 @@ module IR : sig
 
     (** Returns the namespace of the given dialect. *)
     val namespace : mldialect -> string
+  end
+
+  module DialectHandle : sig
+    (* val get : unit -> Stubs.Typs.DialectHandle.t Ctypes.structure *)
+    val register : Stubs.Typs.DialectHandle.t Ctypes.structure -> mlcontext -> unit
   end
 
   module Type : sig
