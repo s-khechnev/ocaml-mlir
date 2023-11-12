@@ -135,8 +135,17 @@ module IR = struct
       Bindings.Operation.create opstate
 
 
+    let name op = name op |> Bindings.Identifier.to_string |> StringRef.to_string
     let region x pos = Bindings.Operation.region x Intptr.(of_int pos)
+    let num_regions reg = num_regions reg |> Intptr.to_int
+    let num_operands op = num_operands op |> Intptr.to_int
+    let operand x pos = Bindings.Operation.operand x Intptr.(of_int pos)
+    let num_results op = num_results op |> Intptr.to_int
     let result x pos = Bindings.Operation.result x Intptr.(of_int pos)
+    let attribute_by_name op name = attribute_by_name op (StringRef.of_string name)
+
+    let set_attribute_by_name op name attr =
+      set_attribute_by_name op (StringRef.of_string name) attr
   end
 
   module Value = struct
@@ -159,14 +168,16 @@ module IR = struct
       Bindings.Block.create size typs (Ctypes.allocate Typs.Location.t loc)
 
 
-    let argument x pos =
-      let pos = Intptr.of_int pos in
-      Bindings.Block.argument x pos
-
-
     let insert_owned_operation blk pos f =
       let pos = Intptr.of_int pos in
       Bindings.Block.insert_owned_operation blk pos f
+
+
+    let num_arguments blk = Bindings.Block.num_arguments blk |> Intptr.to_int
+
+    let argument x pos =
+      let pos = Intptr.of_int pos in
+      Bindings.Block.argument x pos
   end
 
   module Module = struct
@@ -177,6 +188,13 @@ module IR = struct
 
   module Region = struct
     include Bindings.Region
+  end
+
+  module Identifier = struct
+    include Bindings.Identifier
+
+    let get ctx str = get ctx (StringRef.of_string str)
+    let to_string id = to_string id |> StringRef.to_string
   end
 end
 
@@ -303,6 +321,7 @@ module BuiltinTypes = struct
   module Index = Bindings.BuiltinTypes.Index
   module None = Bindings.BuiltinTypes.None
   module Complex = Bindings.BuiltinTypes.Complex
+  module Shaped = Bindings.BuiltinTypes.Shaped
 
   module Vector = struct
     include Bindings.BuiltinTypes.Vector
@@ -327,7 +346,8 @@ module BuiltinTypes = struct
   module Tensor = struct
     include Bindings.BuiltinTypes.Tensor
 
-    let ranked rank shp typ attr =
+    let ranked shp typ attr =
+      let rank = Array.length shp in
       let shp =
         let shp = shp |> Array.map Int64.of_int |> Array.to_list in
         CArray.(start (of_list int64_t shp))
@@ -335,7 +355,8 @@ module BuiltinTypes = struct
       ranked Intptr.(of_int rank) shp typ attr
 
 
-    let ranked_checked loc rank shp typ encoding =
+    let ranked_checked loc shp typ encoding =
+      let rank = Array.length shp in
       let shp =
         let shp = shp |> Array.map Int64.of_int |> Array.to_list in
         CArray.(start (of_list int64_t shp))
@@ -410,6 +431,8 @@ module BuiltinTypes = struct
 end
 
 module BuiltinAttributes = struct
+  let null = Bindings.BuiltinAttributes.null ()
+
   module AffineMap = Bindings.BuiltinAttributes.AffineMap
 
   module Array = struct

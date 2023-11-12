@@ -9,13 +9,6 @@
  (libraries mlir.stubs.types ctypes.stubs ctypes ctypes.foreign))
 
 (rule
- (targets c_flags.sexp c_library_flags.sexp)
- (deps
-  (:discover ../config/discover.exe))
- (action
-  (run %{discover})))
-
-(rule
  (targets types_bindings_generated.ml)
  (deps ../gen/gen_types_c.exe)
  (action

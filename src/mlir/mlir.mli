@@ -128,6 +128,9 @@ module IR : sig
     (** Takes a region owned by the caller and destroys it. *)
     val destroy : mlregion -> unit
 
+    (** Checks whether a region is null. *)
+    val is_null : mlregion -> bool
+
     (** Gets the first block in the region. *)
     val first_block : mlregion -> mlblock
 
@@ -214,14 +217,47 @@ module IR : sig
     (** Checks whether the underlying operation is null. *)
     val is_null : mlop -> bool
 
+    (** Gets the name of the operation as an identifier. *)
+    val name : mlop -> string
+
+    (** Gets the block that owns this operation, returning null if the operation is
+        not owned. *)
+    val block : mlop -> mlblock
+
+    (** Returns the number of regions attached to the given operation. *)
+    val num_regions : mlop -> int
+
     (** Returns `pos`-th region attached to the operation. *)
     val region : mlop -> int -> mlregion
+
+    (** Returns an operation immediately following the given operation it its
+        enclosing block. *)
+    val next_in_block : mlop -> mlop
+
+    (** Returns the number of operands of the operation. *)
+    val num_operands : mlop -> int
+
+    (** Returns `pos`-th operand of the operation. *)
+    val operand : mlop -> int -> mlvalue
+
+    (** Returns the number of results of the operation. *)
+    val num_results : mlop -> int
 
     (** Returns `pos`-th result of the operation. *)
     val result : mlop -> int -> mlvalue
 
+    (** Returns an attribute attached to the operation given its name. *)
+    val attribute_by_name : mlop -> string -> mlattr
+
+    (** Sets an attribute by name, replacing the existing if it exists or
+        adding a new one otherwise. *)
+    val set_attribute_by_name : mlop -> string -> mlattr -> unit
+
     (** Prints an operation to stderr. *)
     val dump : mlop -> unit
+
+    (** Verify the operation and return true if it passes, false if it fails. *)
+    val verify : mlop -> bool
   end
 
   module Value : sig
@@ -269,8 +305,8 @@ module IR : sig
     (** Takes a block owned by the caller and destroys it. *)
     val destroy : mlblock -> unit
 
-    (** Returns `pos`-th argument of the block. *)
-    val argument : mlblock -> int -> mlvalue
+    (** Checks whether a block is null. *)
+    val is_null : mlblock -> bool
 
     (** Returns the first operation in the block. *)
     val first_operation : mlblock -> mlop
@@ -284,8 +320,21 @@ module IR : sig
     (** Takes an operation owned by the caller and inserts it after the (non-owned) reference operation in the given block. If the reference is null, prepends the operation. Otherwise, the reference must belong to the block. *)
     val insert_owned_operation_after : mlblock -> mlop -> mlop -> unit
 
+    (** Returns the terminator operation in the block or null if no terminator. *)
+    val terminator : mlblock -> mlop
+
     (** Takes an operation owned by the caller and appends it to the block. *)
     val append_owned_operation : mlblock -> mlop -> unit
+
+    (** Returns the number of arguments of the block. *)
+    val num_arguments : mlblock -> int
+
+    (** Appends an argument of the specified type to the block. Returns the newly
+        added argument. *)
+    val add_argument : mlblock -> mltype -> mllocation -> mlvalue
+
+    (** Returns `pos`-th argument of the block. *)
+    val argument : mlblock -> int -> mlvalue
   end
 
   module Module : sig
@@ -309,6 +358,20 @@ module IR : sig
 
     (** Views the module as a generic operation. *)
     val operation : mlmodule -> mlop
+  end
+
+  module Identifier : sig
+    (** Gets an identifier with the given string value. *)
+    val get : mlcontext -> string -> mlident
+
+    (** Returns the context associated with this identifier. *)
+    val context : mlident -> mlcontext
+
+    (** Checks whether two identifiers are the same. *)
+    val equal : mlident -> mlident -> bool
+
+    (** Gets the string value of the identifier. *)
+    val to_string : mlident -> string
   end
 end
 
@@ -572,6 +635,11 @@ module BuiltinTypes : sig
     val element_type : mltype -> mltype
   end
 
+  module Shaped : sig
+    (** Checks whether the given shaped type has a static shape. *)
+    val has_static_shape : mltype -> bool
+  end
+
   module Vector : sig
     (** Checks whether the given type is a Vector type. *)
     val is_vector : mltype -> bool
@@ -594,16 +662,16 @@ module BuiltinTypes : sig
     val is_unranked_tensor : mltype -> bool
 
     (** Creates a tensor type of a fixed rank with the given shape and element type in the same context as the element type. The type is owned by the context. *)
-    val ranked : int -> int array -> mltype -> mlattr -> mltype
+    val ranked : int array -> mltype -> mlattr -> mltype
 
     (** Same as "mlirRankedTensorTypeGet" but returns a nullptr wrapping MlirType on illegal arguments, emitting appropriate diagnostics. *)
-    val ranked_checked : mllocation -> int -> int array -> mltype -> mlattr -> mltype
+    val ranked_checked : mllocation -> int array -> mltype -> mlattr -> mltype
 
     (** Creates an unranked tensor type with the given element type in the same context as the element type. The type is owned by the context. *)
-    (* val unranked : mltype -> mltype *)
+    val unranked : mltype -> mltype
 
     (** Same as "mlirUnrankedTensorTypeGet" but returns a nullptr wrapping MlirType on illegal arguments, emitting appropriate diagnostics. *)
-    (* val unranked_checked : mltype -> mllocation -> mltype *)
+    val unranked_checked : mllocation -> mltype -> mltype
   end
 
   module MemRef : sig
@@ -677,6 +745,9 @@ module BuiltinTypes : sig
 end
 
 module BuiltinAttributes : sig
+  (** Returns an empty attribute. *)
+  val null : mlattr
+
   module AffineMap : sig
     (** Checks whether the given attribute is an affine map attribute. *)
     val is_affine_map : mlattr -> bool

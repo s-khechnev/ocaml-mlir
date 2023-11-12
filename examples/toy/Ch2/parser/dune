@@ -1,0 +1,3 @@
+(library
+ (name parser2)
+ (public_name mlir.toy.parser2))

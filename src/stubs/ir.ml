@@ -120,10 +120,9 @@ module Bindings (F : FOREIGN) = struct
      ===----------------------------------------------------------------------=== *)
 
   module DialectHandle = struct
-    let get namespace =
-      let f_name = Printf.sprintf "mlirGetDialectHandle__%s__" namespace in
-      foreign f_name (void @-> returning Typs.DialectHandle.t)
-
+    (* let get =
+      let f_name = Printf.sprintf "mlirGetDialectHandle__%s__" "toy" in
+      foreign f_name (void @-> returning Typs.DialectHandle.t) *)
 
     (* Returns the namespace associated with the provided dialect handle. *)
     let namespace =
@@ -526,7 +525,7 @@ module Bindings (F : FOREIGN) = struct
 
 
     (* Returns an attribute attached to the operation given its name. *)
-    let get_attribute_by_name =
+    let attribute_by_name =
       foreign
         "mlirOperationGetAttributeByName"
         (Typs.Operation.t @-> Typs.StringRef.t @-> returning Typs.Attribute.t)
