@@ -14,6 +14,7 @@ let () =
       [ Printf.sprintf "-L%s" llvm_libdir
       ; "-lMLIRCAPIIR"
       ; "-lMLIRCAPIRegisterEverything"
+      ; "-lMLIRCAPITransforms"
       ; "-lLLVM"
       ; "-lMLIR"
       ; "-lstdc++"

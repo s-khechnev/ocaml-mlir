@@ -20,6 +20,8 @@ type mlop_pm = Typs.OpPassManager.t structured
 type mlident = Typs.Identifier.t structured
 type mlaffine_expr = Typs.AffineExpr.t structured
 type mldialect_handle = Typs.DialectHandle.t structured
+type mlsymboltbl = Typs.SymbolTable.t structured
+type mlop_operand = Typs.OpOperand.t structured
 
 module StringRef = Bindings.StringRef
 
@@ -27,6 +29,7 @@ module IR = struct
   module Context = struct
     include Bindings.Context
 
+    let global_ctx = create ()
     let num_registered_dialects ctx = num_registered_dialects ctx |> Signed.Long.to_int
     let num_loaded_dialects ctx = num_loaded_dialects ctx |> Signed.Long.to_int
     let get_or_load_dialect ctx s = get_or_load_dialect ctx StringRef.(of_string s)
@@ -140,6 +143,7 @@ module IR = struct
     let num_regions reg = num_regions reg |> Intptr.to_int
     let num_operands op = num_operands op |> Intptr.to_int
     let operand x pos = Bindings.Operation.operand x Intptr.(of_int pos)
+    let set_operand op pos value = set_operand op Intptr.(of_int pos) value
     let num_results op = num_results op |> Intptr.to_int
     let result x pos = Bindings.Operation.result x Intptr.(of_int pos)
     let attribute_by_name op name = attribute_by_name op (StringRef.of_string name)
@@ -157,6 +161,12 @@ module IR = struct
     let print ~callback x =
       let callback s _ = callback (StringRef.to_string s) in
       print x callback null
+  end
+
+  module OpOperand = struct
+    include Bindings.OpOperand
+
+    let operand_number oper = operand_number oper |> Unsigned.UInt.to_int
   end
 
   module Block = struct
@@ -195,6 +205,21 @@ module IR = struct
 
     let get ctx str = get ctx (StringRef.of_string str)
     let to_string id = to_string id |> StringRef.to_string
+  end
+
+  module SymbolTable = struct
+    include Bindings.SymbolTable
+
+    let symbol_attr_name () = symbol_attr_name () |> StringRef.to_string
+    let visibility_attr_name () = visibility_attr_name () |> StringRef.to_string
+    let lookup tbl name = lookup tbl (StringRef.of_string name)
+
+    let replace_all_symbol_uses ~old_sym ~new_sym from =
+      replace_all_symbol_uses
+        (StringRef.of_string old_sym)
+        (StringRef.of_string new_sym)
+        from
+      |> Bindings.LogicalResult.is_success
   end
 end
 
@@ -594,7 +619,7 @@ module BuiltinAttributes = struct
   end
 end
 
-(* module Transforms = Bindings.Transforms *)
+module Transforms = Bindings.Transforms
 
 let register_all_dialects = Bindings.register_all_dialects
 

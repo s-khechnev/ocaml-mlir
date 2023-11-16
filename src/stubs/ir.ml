@@ -996,12 +996,12 @@ module Bindings (F : FOREIGN) = struct
   module SymbolTable = struct
     (* Returns the name of the attribute used to store symbol names compatible with
        symbol tables. *)
-    let symbol =
+    let symbol_attr_name =
       foreign "mlirSymbolTableGetSymbolAttributeName" (void @-> returning Typs.StringRef.t)
 
 
     (* Returns the name of the attribute used to store symbol visibility. *)
-    let visibility =
+    let visibility_attr_name =
       foreign
         "mlirSymbolTableGetVisibilityAttributeName"
         (void @-> returning Typs.StringRef.t)

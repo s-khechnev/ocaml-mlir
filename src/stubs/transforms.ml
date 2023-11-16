@@ -1,9 +1,10 @@
 open Ctypes
 
-module Make (S : sig
-  val s : string
-end)
-(F : FOREIGN) =
+module Make
+    (S : sig
+       val s : string
+     end)
+    (F : FOREIGN) =
 struct
   open F
 
@@ -21,48 +22,6 @@ module Bindings (F : FOREIGN) = struct
   (* Registration for the entire group *)
   let register_passes = foreign "mlirRegisterTransformsPasses" (void @-> returning void)
 
-  module AffineLoopFusion =
-    Make
-      (struct
-        let s = "AffineLoopFusion"
-      end)
-      (F)
-
-  module AffinePipelineDataTransfer =
-    Make
-      (struct
-        let s = "AffinePipelineDataTransfer"
-      end)
-      (F)
-
-  module BufferDeallocation =
-    Make
-      (struct
-        let s = "BufferDeallocation"
-      end)
-      (F)
-
-  module BufferHoisting =
-    Make
-      (struct
-        let s = "BufferHoisting"
-      end)
-      (F)
-
-  module BufferLoopHoisting =
-    Make
-      (struct
-        let s = "BufferLoopHoisting"
-      end)
-      (F)
-
-  module BufferResultsToOutParams =
-    Make
-      (struct
-        let s = "BufferResultsToOutParams"
-      end)
-      (F)
-
   module CSE =
     Make
       (struct
@@ -77,17 +36,17 @@ module Bindings (F : FOREIGN) = struct
       end)
       (F)
 
-  module CopyRemoval =
+  module ControlFlowSink =
     Make
       (struct
-        let s = "CopyRemoval"
+        let s = "ControlFlowSink"
       end)
       (F)
 
-  module FinalizingBufferize =
+  module GenerateRuntimeVerification =
     Make
       (struct
-        let s = "FinalizingBufferize"
+        let s = "GenerateRuntimeVerification"
       end)
       (F)
 
@@ -105,13 +64,6 @@ module Bindings (F : FOREIGN) = struct
       end)
       (F)
 
-  module LoopCoalescing =
-    Make
-      (struct
-        let s = "LoopCoalescing"
-      end)
-      (F)
-
   module LoopInvariantCodeMotion =
     Make
       (struct
@@ -119,52 +71,10 @@ module Bindings (F : FOREIGN) = struct
       end)
       (F)
 
-  module MemRefDataFlowOpt =
-    Make
-      (struct
-        let s = "MemRefDataFlowOpt"
-      end)
-      (F)
-
-  module NormlizeMemRefs =
-    Make
-      (struct
-        let s = "NormalizeMemRefs"
-      end)
-      (F)
-
-  module ParallelLoopCollapsing =
-    Make
-      (struct
-        let s = "ParallelLoopCollapsing"
-      end)
-      (F)
-
-  module PrintCFG =
-    Make
-      (struct
-        let s = "PrintCFG"
-      end)
-      (F)
-
-  module PrintOp =
-    Make
-      (struct
-        let s = "PrintOp"
-      end)
-      (F)
-
   module PrintOpStats =
     Make
       (struct
         let s = "PrintOpStats"
-      end)
-      (F)
-
-  module PromoteBuffersToStack =
-    Make
-      (struct
-        let s = "PromoteBuffersToStack"
       end)
       (F)
 
@@ -186,6 +96,27 @@ module Bindings (F : FOREIGN) = struct
     Make
       (struct
         let s = "SymbolDCE"
+      end)
+      (F)
+
+  module SymbolPrivatize =
+    Make
+      (struct
+        let s = "SymbolPrivatize"
+      end)
+      (F)
+
+  module TopologicalSort =
+    Make
+      (struct
+        let s = "TopologicalSort"
+      end)
+      (F)
+
+  module ViewOpGraph =
+    Make
+      (struct
+        let s = "ViewOpGraph"
       end)
       (F)
 end

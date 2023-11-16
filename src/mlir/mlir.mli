@@ -52,8 +52,16 @@ type mlaffine_expr
 (** MLIR Dialect Handle *)
 type mldialect_handle
 
+(** MLIR Symbol Table *)
+type mlsymboltbl
+
+(** MLIR OpOperand *)
+type mlop_operand
+
 module IR : sig
   module Context : sig
+    val global_ctx : mlcontext
+
     (** Creates an MLIR context and transfers its ownership to the caller. *)
     val create : unit -> mlcontext
 
@@ -80,6 +88,9 @@ module IR : sig
 
     (** Gets the dialect instance owned by the given context using the dialect namespace to identify it, loads (i.e., constructs the instance of) the dialect if necessary. If the dialect is not registered with the context, returns null. Use mlirContextLoad<Name>mldialecto load an unregistered dialect. *)
     val get_or_load_dialect : mlcontext -> string -> mldialect
+
+    (** Set threading mode (must be set to false to mlir-print-ir-after-all). *)
+    val enable_multithreading : mlcontext -> bool -> unit
   end
 
   module Dialect : sig
@@ -211,11 +222,23 @@ module IR : sig
     (** Creates an operation and transfers ownership to the caller. *)
     val create : mlop_state -> mlop
 
+    (** Creates a deep copy of an operation. The operation is not inserted and
+        ownership is transferred to the caller. *)
+    val clone : mlop -> mlop
+
     (** Takes an operation owned by the caller and destroys it. *)
     val destroy : mlop -> unit
 
+    (** Removes the given operation from its parent block. The operation is not
+        destroyed. The ownership of the operation is transferred to the caller. *)
+    val remove_from_parent : mlop -> unit
+
     (** Checks whether the underlying operation is null. *)
     val is_null : mlop -> bool
+
+    (** Checks whether two operation handles point to the same operation. This does
+        not perform deep comparison. *)
+    val equal : mlop -> mlop -> bool
 
     (** Gets the name of the operation as an identifier. *)
     val name : mlop -> string
@@ -239,6 +262,9 @@ module IR : sig
 
     (** Returns `pos`-th operand of the operation. *)
     val operand : mlop -> int -> mlvalue
+
+    (** Sets the `pos`-th operand of the operation. *)
+    val set_operand : mlop -> int -> mlvalue -> unit
 
     (** Returns the number of results of the operation. *)
     val num_results : mlop -> int
@@ -296,6 +322,25 @@ module IR : sig
 
     (** Prints a value by sending chunks of the string representation and forwarding `userData to `callback`. Note that the callback may be called several times with consecutive chunks of the string. *)
     val print : callback:(string -> unit) -> mlvalue -> unit
+
+    (** Returns an op operand representing the first use of the value, or a null op
+        operand if there are no uses. *)
+    val first_use : mlvalue -> mlop_operand
+  end
+
+  module OpOperand : sig
+    (** Returns whether the op operand is null. *)
+    val is_null : mlop_operand -> bool
+
+    (** Returns the owner operation of an op operand. *)
+    val owner : mlop_operand -> mlop
+
+    (** Returns the operand number of an op operand. *)
+    val operand_number : mlop_operand -> int
+
+    (** Returns an op operand representing the next use of the value, or a null op
+        operand if there is no next use. *)
+    val next_use : mlop_operand -> mlop_operand
   end
 
   module Block : sig
@@ -304,6 +349,9 @@ module IR : sig
 
     (** Takes a block owned by the caller and destroys it. *)
     val destroy : mlblock -> unit
+
+    (** Detach a block from the owning region and assume ownership. *)
+    val detach : mlblock -> unit
 
     (** Checks whether a block is null. *)
     val is_null : mlblock -> bool
@@ -372,6 +420,48 @@ module IR : sig
 
     (** Gets the string value of the identifier. *)
     val to_string : mlident -> string
+  end
+
+  module SymbolTable : sig
+    (** Returns the name of the attribute used to store symbol names compatible with
+        symbol tables. *)
+    val symbol_attr_name : unit -> string
+
+    (** Returns the name of the attribute used to store symbol visibility. *)
+    val visibility_attr_name : unit -> string
+
+    (** Creates a symbol table for the given operation. If the operation does not
+        have the SymbolTable trait, returns a null symbol table. *)
+    val create : mlop -> mlsymboltbl
+
+    (** Returns true if the symbol table is null. *)
+    val is_null : mlsymboltbl -> bool
+
+    (** Destroys the symbol table created with mlirSymbolTableCreate. This does not
+        affect the operations in the table. *)
+    val destroy : mlsymboltbl -> unit
+
+    (** Looks up a symbol with the given name in the given symbol table and returns
+        the operation that corresponds to the symbol. If the symbol cannot be found,
+        returns a null operation. *)
+    val lookup : mlsymboltbl -> string -> mlop
+
+    (** Inserts the given operation into the given symbol table. The operation must
+        have the symbol trait. If the symbol table already has a symbol with the
+        same name, renames the symbol being inserted to ensure name uniqueness. Note
+        that this does not move the operation itself into the block of the symbol
+        table operation, this should be done separately. Returns the name of the
+        symbol after insertion. *)
+    val insert : mlsymboltbl -> mlop -> mlattr
+
+    (** Removes the given operation from the symbol table and erases it. *)
+    val erase : mlsymboltbl -> mlop -> unit
+
+    (** Attempt to replace all uses that are nested within the given operation
+        of the given symbol 'oldSymbol' with the provided 'newSymbol'. This does
+        not traverse into nested symbol tables. Will fail atomically if there are
+        any unknown operations that may be potential symbol tables. *)
+    val replace_all_symbol_uses : old_sym:string -> new_sym:string -> mlop -> bool
   end
 end
 
@@ -1019,17 +1109,6 @@ module BuiltinAttributes : sig
   end
 end
 
-(* module StandardDialect : sig
-   (** Registers the Standard dialect with the given context. This allows the dialect to be loaded dynamically if needed when parsing. *)
-   val register_standard_dialect : mlcontext -> unit
-
-   (** Loads the Standard dialect into the given context. The dialect does _not_ have to be registered in advance. *)
-   val load_standard_dialect : mlcontext -> mldialect
-
-   (** Returns the namespace of the Standard dialect, suitable for loading it. *)
-   val namespace : unit -> string
-   end *)
-
 module PassManager : sig
   (** Create a new top-level PassManager. *)
   val create : mlcontext -> mlpm
@@ -1045,6 +1124,9 @@ module PassManager : sig
 
   (** Run the provided `passManager` on the given `module`. *)
   val run : mlpm -> mlmodule -> bool
+
+  (** Enable mlir-print-ir-after-all. *)
+  val enable_ir_printing : mlpm -> unit
 
   (** Nest an OpPassManager under the top-level PassManager, the nested passmanager will only run on operations matching the provided name. The returned OpPassManager will be destroyed when the parent is destroyed. To further nest more OpPassManager under the newly returned one, see `mlirOpPassManagerNest` below. *)
   val nested_under : mlpm -> string -> mlop_pm
@@ -1067,34 +1149,24 @@ module OpPassManager : sig
   (* val parse_pass_pipeline : mlop_pm -> string -> bool *)
 end
 
-(* module Transforms : sig
-   val register_passes : unit -> unit
+module Transforms : sig
+  val register_passes : unit -> unit
 
-   module AffineLoopFusion : Transforms_intf.Sig with type t := mlpass
-   module AffinePipelineDataTransfer : Transforms_intf.Sig with type t := mlpass
-   module BufferDeallocation : Transforms_intf.Sig with type t := mlpass
-   module BufferHoisting : Transforms_intf.Sig with type t := mlpass
-   module BufferLoopHoisting : Transforms_intf.Sig with type t := mlpass
-   module BufferResultsToOutParams : Transforms_intf.Sig with type t := mlpass
-   module CSE : Transforms_intf.Sig with type t := mlpass
-   module Canonicalizer : Transforms_intf.Sig with type t := mlpass
-   module CopyRemoval : Transforms_intf.Sig with type t := mlpass
-   module FinalizingBufferize : Transforms_intf.Sig with type t := mlpass
-   module Inliner : Transforms_intf.Sig with type t := mlpass
-   module LocationSnapshot : Transforms_intf.Sig with type t := mlpass
-   module LoopCoalescing : Transforms_intf.Sig with type t := mlpass
-   module LoopInvariantCodeMotion : Transforms_intf.Sig with type t := mlpass
-   module MemRefDataFlowOpt : Transforms_intf.Sig with type t := mlpass
-   module NormlizeMemRefs : Transforms_intf.Sig with type t := mlpass
-   module ParallelLoopCollapsing : Transforms_intf.Sig with type t := mlpass
-   module PrintCFG : Transforms_intf.Sig with type t := mlpass
-   module PrintOp : Transforms_intf.Sig with type t := mlpass
-   module PrintOpStats : Transforms_intf.Sig with type t := mlpass
-   module PromoteBuffersToStack : Transforms_intf.Sig with type t := mlpass
-   module SCCP : Transforms_intf.Sig with type t := mlpass
-   module StripDebugInfo : Transforms_intf.Sig with type t := mlpass
-   module SymbolDCE : Transforms_intf.Sig with type t := mlpass
-   end *)
+  module CSE : Transforms_intf.Sig with type t := mlpass
+  module Canonicalizer : Transforms_intf.Sig with type t := mlpass
+  module ControlFlowSink : Transforms_intf.Sig with type t := mlpass
+  module GenerateRuntimeVerification : Transforms_intf.Sig with type t := mlpass
+  module Inliner : Transforms_intf.Sig with type t := mlpass
+  module LocationSnapshot : Transforms_intf.Sig with type t := mlpass
+  module LoopInvariantCodeMotion : Transforms_intf.Sig with type t := mlpass
+  module PrintOpStats : Transforms_intf.Sig with type t := mlpass
+  module SCCP : Transforms_intf.Sig with type t := mlpass
+  module StripDebugInfo : Transforms_intf.Sig with type t := mlpass
+  module SymbolDCE : Transforms_intf.Sig with type t := mlpass
+  module SymbolPrivatize : Transforms_intf.Sig with type t := mlpass
+  module TopologicalSort : Transforms_intf.Sig with type t := mlpass
+  module ViewOpGraph : Transforms_intf.Sig with type t := mlpass
+end
 
 (** Registers all dialects known to core MLIR with the provided Context.
     This is needed before creating IR for these Dialects. *)

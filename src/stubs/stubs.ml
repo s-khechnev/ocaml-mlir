@@ -8,10 +8,8 @@ module Bindings (F : FOREIGN) = struct
   include Ir.Bindings (F)
   include Pass.Bindings (F)
   include Register_everything.Bindings (F)
-
-  (* module StandardDialect = Standard_dialect.Bindings (F) *)
   module BuiltinAttributes = Builtin_attributes.Bindings (F)
   module BuiltinTypes = Builtin_types.Bindings (F)
-  (* module Transforms = Transforms.Bindings (F) *)
+  module Transforms = Transforms.Bindings (F)
   include Support.Bindings (F)
 end
