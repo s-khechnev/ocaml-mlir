@@ -75,21 +75,22 @@ let rec mlirgen_expr block =
     in
     append_operation_and_get_result (const_op shp values)
   | Ast.VarDecl (name, shape, init_expr) ->
-    let value = mlirgen_expr block init_expr in
-    let op =
+    let init_value = mlirgen_expr block init_expr in
+    let value =
       if Array.length shape <> 0
       then (
         let typ = typ shape in
         let op_state =
           IR.OperationState.get "toy.reshape" (IR.Location.unknown global_ctx)
         in
-        let () = IR.OperationState.add_operands op_state [ value ] in
+        let () = IR.OperationState.add_operands op_state [ init_value ] in
         let () = IR.OperationState.add_results op_state [ typ ] in
-        IR.Operation.create op_state)
-      else IR.Value.op_result_get_owner value
+        let reshape_op = IR.Operation.create op_state in
+        append_operation_and_get_result reshape_op)
+      else init_value
     in
-    let () = Hashtbl.add_exn symbolTable ~key:name ~data:(IR.Operation.result op 0) in
-    append_operation_and_get_result op
+    let () = Hashtbl.add_exn symbolTable ~key:name ~data:value in
+    value
   | Ast.Return expr ->
     let op_state = IR.OperationState.get "toy.return" (IR.Location.unknown global_ctx) in
     let () =
