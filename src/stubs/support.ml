@@ -73,7 +73,7 @@ module Bindings (F : FOREIGN) = struct
   (*===----------------------------------------------------------------------===
      TypeIDAllocator API.
     ===----------------------------------------------------------------------===*)
-  module TypeIdAllocator = struct
+  module TypeIDAllocator = struct
     (* Creates a type id allocator for dynamic type id creation *)
     let create =
       foreign "mlirTypeIDAllocatorCreate" (void @-> returning Typs.TypeIDAllocator.t)

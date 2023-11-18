@@ -107,4 +107,67 @@ module Bindings (F : FOREIGN) = struct
          @-> ptr void
          @-> returning Typs.LogicalResult.t)
   end
+
+  module ExternalPass = struct
+    module ExternalPassCallbacks = struct
+      type t
+
+      let t : t structure typ = structure "MlirExternalPassCallbacks"
+
+      let construct =
+        field t "construct" Ctypes.(Foreign.funptr (ptr void @-> returning void))
+
+
+      let destruct =
+        field t "destruct" Ctypes.(Foreign.funptr (ptr void @-> returning void))
+
+
+      let initialize =
+        field
+          t
+          "initialize"
+          Ctypes.(
+            Foreign.funptr (Typs.Context.t @-> ptr void @-> returning Typs.LogicalResult.t))
+
+
+      let clone =
+        field t "clone" Ctypes.(Foreign.funptr (ptr void @-> returning (ptr void)))
+
+
+      let run =
+        field
+          t
+          "run"
+          Ctypes.(
+            Foreign.funptr
+              (Typs.Operation.t @-> Typs.ExternalPass.t @-> ptr void @-> returning void))
+
+
+      let () = seal t
+    end
+
+    (* Creates an external `MlirPass` that calls the supplied `callbacks` using the
+       supplied `userData`. If `opName` is empty, the pass is a generic operation
+       pass. Otherwise it is an operation pass specific to the specified pass name. *)
+    let create =
+      foreign
+        "mlirCreateExternalPass"
+        (Typs.TypeID.t
+         @-> Typs.StringRef.t
+         @-> Typs.StringRef.t
+         @-> Typs.StringRef.t
+         @-> Typs.StringRef.t
+         @-> intptr_t
+         @-> ptr Typs.DialectHandle.t
+         @-> ExternalPassCallbacks.t
+         @-> ptr void
+         @-> returning Typs.Pass.t)
+
+
+    (* This signals that the pass has failed. This is only valid to call during
+       the `run` callback of `MlirExternalPassCallbacks`.
+       See Pass::signalPassFailure(). *)
+    let signal_failure =
+      foreign "mlirExternalPassSignalFailure" (Typs.ExternalPass.t @-> returning void)
+  end
 end

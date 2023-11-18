@@ -7,6 +7,12 @@ type mldialect
 (** MLIR Type *)
 type mltype
 
+(** MLIR Type ID *)
+type mltypeid
+
+(** MLIR Type ID Allocator *)
+type mltypeid_alloc
+
 (** MLIR Block *)
 type mlblock
 
@@ -57,6 +63,18 @@ type mlsymboltbl
 
 (** MLIR OpOperand *)
 type mlop_operand
+
+(** MLIR External Pass *)
+type mlexternal_pass
+
+(** MLIR External Pass Callbacks *)
+type mlexternal_pass_callbacks =
+  { construct : unit -> unit
+  ; destruct : unit -> unit
+  ; initialize : (mlcontext -> unit -> bool) option
+  ; clone : unit -> unit
+  ; run : mlop -> mlexternal_pass -> unit
+  }
 
 module IR : sig
   module Context : sig
@@ -1109,6 +1127,17 @@ module BuiltinAttributes : sig
   end
 end
 
+module TypeIDAllocator : sig
+  (* Creates a type id allocator for dynamic type id creation. *)
+  val create : unit -> mltypeid_alloc
+
+  (* Deallocates the allocator and all allocated type ids. *)
+  val destroy : mltypeid_alloc -> unit
+
+  (* Allocates a type id that is valid for the lifetime of the allocator. *)
+  val allocate_type_id : mltypeid_alloc -> mltypeid
+end
+
 module PassManager : sig
   (** Create a new top-level PassManager. *)
   val create : mlcontext -> mlpm
@@ -1147,6 +1176,28 @@ module OpPassManager : sig
 
   (** Parse a textual MLIR pass pipeline and add it to the provided OpPassManager. *)
   (* val parse_pass_pipeline : mlop_pm -> string -> bool *)
+end
+
+module ExternalPass : sig
+  val empty_callbacks : mlexternal_pass_callbacks
+
+  (* Creates an external `MlirPass` that calls the supplied `callbacks` using the
+     supplied `userData`. If `opName` is empty, the pass is a generic operation
+     pass. Otherwise it is an operation pass specific to the specified pass name. *)
+  val create
+    :  mltypeid
+    -> name:string
+    -> arg:string
+    -> desc:string
+    -> op_name:string
+    -> dep_dialects:mldialect_handle list
+    -> mlexternal_pass_callbacks
+    -> mlpass
+
+  (* This signals that the pass has failed. This is only valid to call during
+     the `run` callback of `MlirExternalPassCallbacks`.
+     See Pass::signalPassFailure(). *)
+  val signal_failure : mlexternal_pass -> unit
 end
 
 module Transforms : sig

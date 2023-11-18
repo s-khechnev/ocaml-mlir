@@ -5,6 +5,7 @@ type 'a structured = ('a, [ `Struct ]) Ctypes_static.structured
 type mlcontext = Typs.Context.t structured
 type mldialect = Typs.Dialect.t structured
 type mltype = Typs.Type.t structured
+type mltypeid = Typs.TypeID.t structured
 type mlblock = Typs.Block.t structured
 type mlregion = Typs.Region.t structured
 type mlvalue = Typs.Value.t structured
@@ -22,6 +23,16 @@ type mlaffine_expr = Typs.AffineExpr.t structured
 type mldialect_handle = Typs.DialectHandle.t structured
 type mlsymboltbl = Typs.SymbolTable.t structured
 type mlop_operand = Typs.OpOperand.t structured
+type mltypeid_alloc = Typs.TypeIDAllocator.t structured
+type mlexternal_pass = Typs.ExternalPass.t structured
+
+type mlexternal_pass_callbacks =
+  { construct : unit -> unit
+  ; destruct : unit -> unit
+  ; initialize : (mlcontext -> unit -> bool) option
+  ; clone : unit -> unit
+  ; run : mlop -> mlexternal_pass -> unit
+  }
 
 module StringRef = Bindings.StringRef
 
@@ -223,6 +234,10 @@ module IR = struct
   end
 end
 
+module TypeIDAllocator = struct
+  include Bindings.TypeIDAllocator
+end
+
 module AffineExpr = struct
   type t = Typs.AffineExpr.t structured
 
@@ -330,6 +345,47 @@ module OpPassManager = struct
     let callback s _ = callback (StringRef.to_string s) in
     parse_pass_pipeline pm StringRef.(of_string s) callback null
     |> Bindings.LogicalResult.is_success
+end
+
+module ExternalPass = struct
+  include Bindings.ExternalPass
+
+  let empty_callbacks =
+    { construct = (fun _ -> ())
+    ; destruct = (fun _ -> ())
+    ; initialize = None
+    ; clone = (fun _ -> ())
+    ; run = (fun _ _ -> ())
+    }
+
+
+  let create type_id ~name ~arg ~desc ~op_name ~dep_dialects callbacks =
+    let s_callbacks = make ExternalPassCallbacks.t in
+    let () =
+      setf s_callbacks ExternalPassCallbacks.construct (fun _ -> callbacks.construct ());
+      setf s_callbacks ExternalPassCallbacks.destruct (fun _ -> callbacks.destruct ());
+      (match callbacks.initialize with
+       | Some init ->
+         setf s_callbacks ExternalPassCallbacks.initialize (fun ctx _ ->
+           if init ctx ()
+           then Bindings.LogicalResult.success ()
+           else Bindings.LogicalResult.failure ())
+       | None -> ());
+      setf s_callbacks ExternalPassCallbacks.clone (fun _ ->
+        let _ = callbacks.clone () in
+        null);
+      setf s_callbacks ExternalPassCallbacks.run (fun op pass _ -> callbacks.run op pass)
+    in
+    create
+      type_id
+      (StringRef.of_string name)
+      (StringRef.of_string arg)
+      (StringRef.of_string desc)
+      (StringRef.of_string op_name)
+      (Intptr.of_int (List.length dep_dialects))
+      CArray.(start (of_list Typs.DialectHandle.t dep_dialects))
+      s_callbacks
+      null
 end
 
 module BuiltinTypes = struct
