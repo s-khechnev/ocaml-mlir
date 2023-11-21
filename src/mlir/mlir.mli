@@ -258,6 +258,9 @@ module IR : sig
         not perform deep comparison. *)
     val equal : mlop -> mlop -> bool
 
+    (** Gets the location of the operation. *)
+    val loc : mlop -> mllocation
+
     (** Gets the name of the operation as an identifier. *)
     val name : mlop -> string
 

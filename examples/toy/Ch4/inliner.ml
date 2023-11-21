@@ -57,18 +57,6 @@ let inline_calls_in_main modul =
               let () = IR.OperationState.add_results op_state [ Mlir_gen.typ [||] ] in
               IR.Operation.create op_state :: acc)
           in
-          let replace_uses value replacmnt =
-            let rec find_uses oper acc =
-              if IR.OpOperand.is_null oper
-              then acc
-              else find_uses (IR.OpOperand.next_use oper) (oper :: acc)
-            in
-            let uses = find_uses (IR.Value.first_use value) [] in
-            List.iter (List.rev uses) ~f:(fun oper ->
-              let owner = IR.OpOperand.owner oper in
-              let oper_num = IR.OpOperand.operand_number oper in
-              IR.Operation.set_operand owner oper_num replacmnt)
-          in
           let callee =
             let callee_name =
               BuiltinAttributes.FlatSymbolRef.value
@@ -87,7 +75,8 @@ let inline_calls_in_main modul =
                 let blk_arg = IR.Block.argument callee_blk n in
                 blk_arg, cast_res)
             in
-            List.iter args ~f:(fun (arg, replacmnt) -> replace_uses arg replacmnt)
+            List.iter args ~f:(fun (arg, replacmnt) ->
+              IR.Value.replace_uses ~old:arg ~fresh:replacmnt)
           in
           (* insert casts and operations of callee block into main *)
           let callee_ops =
@@ -98,7 +87,7 @@ let inline_calls_in_main modul =
           (* replace call`s result with callee`s result *)
           let call_res = IR.Operation.result call 0 in
           let callee_res = IR.Operation.operand (IR.Block.terminator callee_blk) 0 in
-          let () = replace_uses call_res callee_res in
+          let () = IR.Value.replace_uses ~old:call_res ~fresh:callee_res in
           IR.Operation.destroy call)
       in
       inline ()

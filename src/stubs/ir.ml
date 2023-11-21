@@ -419,7 +419,7 @@ module Bindings (F : FOREIGN) = struct
 
 
     (* Gets the location of the operation *)
-    let location =
+    let loc =
       foreign "mlirOperationGetLocation" (Typs.Operation.t @-> returning Typs.Location.t)
 
 

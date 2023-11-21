@@ -14,7 +14,7 @@
   ctypes.foreign
   mlir.stubs
   mlir.stubs.types)
- (modules main mlir_gen inliner)
+ (modules main mlir_gen inliner shape_inference)
  (flags
   (:standard -cclib %{read:toy_flags})))
 
