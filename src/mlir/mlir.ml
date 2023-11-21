@@ -199,6 +199,13 @@ module IR = struct
     let argument x pos =
       let pos = Intptr.of_int pos in
       Bindings.Block.argument x pos
+
+
+    let ops blk =
+      let rec loop op acc =
+        if Operation.is_null op then acc else loop (Operation.next_in_block op) (op :: acc)
+      in
+      loop (first_operation blk) [] |> List.rev
   end
 
   module Module = struct

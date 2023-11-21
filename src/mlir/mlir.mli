@@ -401,6 +401,9 @@ module IR : sig
 
     (** Returns `pos`-th argument of the block. *)
     val argument : mlblock -> int -> mlvalue
+
+    (** Returns operations in the block. *)
+    val ops : mlblock -> mlop list
   end
 
   module Module : sig
