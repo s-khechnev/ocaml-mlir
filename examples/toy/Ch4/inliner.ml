@@ -1,7 +1,7 @@
 open Base
 open Mlir
 
-let rec find_func op name =
+let rec find_func_by_name op name =
   if IR.Operation.is_null op
   then raise Stdlib.Not_found
   else (
@@ -9,19 +9,7 @@ let rec find_func op name =
     let func_name = BuiltinAttributes.String.value name_attr in
     if String.equal func_name name
     then op
-    else find_func (IR.Operation.next_in_block op) name)
-
-
-let find_ops blk f =
-  let terminator = IR.Block.terminator blk in
-  let rec loop acc op =
-    if IR.Operation.equal op terminator || IR.Operation.is_null op
-    then acc
-    else if f op
-    then loop (op :: acc) (IR.Operation.next_in_block op)
-    else loop acc (IR.Operation.next_in_block op)
-  in
-  List.rev @@ loop [] (IR.Block.first_operation blk)
+    else find_func_by_name (IR.Operation.next_in_block op) name)
 
 
 let insert_ops_after blk after ops =
@@ -38,12 +26,12 @@ let insert_ops_after blk after ops =
 let inline_calls_in_main modul =
   let modul_blk = IR.Module.body modul in
   let fst_func = IR.Block.first_operation modul_blk in
-  let find_func = find_func fst_func in
+  let find_func = find_func_by_name fst_func in
   let main_func = find_func "main" in
   let main_block = IR.Region.first_block (IR.Operation.region main_func 0) in
   let rec inline () =
     let calls =
-      find_ops main_block (fun op ->
+      List.filter (IR.Block.ops main_block) ~f:(fun op ->
         String.equal (IR.Operation.name op) "toy.generic_call")
     in
     match calls with
@@ -102,7 +90,10 @@ let inline_calls_in_main modul =
             List.iter args ~f:(fun (arg, replacmnt) -> replace_uses arg replacmnt)
           in
           (* insert casts and operations of callee block into main *)
-          let callee_ops = find_ops callee_blk (fun _ -> true) in
+          let callee_ops =
+            List.filter (IR.Block.ops callee_blk) ~f:(fun op ->
+              not (IR.Operation.equal op (IR.Block.terminator callee_blk)))
+          in
           let () = insert_ops_after main_block call (casts @ callee_ops) in
           (* replace call`s result with callee`s result *)
           let call_res = IR.Operation.result call 0 in
@@ -115,7 +106,7 @@ let inline_calls_in_main modul =
   let () = inline () in
   (* remove all functions except the main *)
   List.iter
-    (find_ops modul_blk (fun op ->
+    (List.filter (IR.Block.ops modul_blk) ~f:(fun op ->
        let attr = IR.Operation.attribute_by_name op "sym_name" in
        not (String.equal (BuiltinAttributes.String.value attr) "main")))
     ~f:(fun func -> IR.Operation.destroy func)
