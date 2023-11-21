@@ -97,22 +97,15 @@ let run main_func _ =
   loop worklist
 
 
-let infer_shapes modul =
+let infer_shapes_pass () =
   let callbacks = { ExternalPass.empty_callbacks with run } in
   let alloc = TypeIDAllocator.create () in
   let typ_id = TypeIDAllocator.allocate_type_id alloc in
-  let pass =
-    ExternalPass.create
-      typ_id
-      ~name:"shape_inference"
-      ~arg:""
-      ~desc:"Inference the tensor's shape"
-      ~op_name:""
-      ~dep_dialects:[]
-      callbacks
-  in
-  let pm = PassManager.create IR.Context.global_ctx in
-  let op_pm = PassManager.nested_under pm "toy.func" in
-  let () = OpPassManager.add_owned_pass op_pm pass in
-  let _ = PassManager.run pm modul in
-  ()
+  ExternalPass.create
+    typ_id
+    ~name:"shape_inference"
+    ~arg:""
+    ~desc:"Inference the tensor's shape"
+    ~op_name:""
+    ~dep_dialects:[]
+    callbacks

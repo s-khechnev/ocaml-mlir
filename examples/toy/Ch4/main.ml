@@ -22,12 +22,12 @@ let modul =
             ( "b"
             , [| 2; 3 |]
             , Literal
-                ( [| 6 |]
-                , [ Literal
-                      ([| 6 |], [ Num 1.0; Num 2.0; Num 3.0; Num 4.0; Num 5.0; Num 6.0 ])
+                ( [| 2; 3 |]
+                , [ Literal ([| 3 |], [ Num 1.0; Num 2.0; Num 3.0 ])
+                  ; Literal ([| 3 |], [ Num 4.0; Num 5.0; Num 6.0 ])
                   ] ) )
-        ; VarDecl ("d", [||], Call ("multiply_transpose", [ Var "a"; Var "b" ]))
-        ; Print (Var "d")
+        ; VarDecl ("c", [||], Call ("multiply_transpose", [ Var "a"; Var "b" ]))
+        ; Print (Var "c")
         ; Return None
         ] )
   ]
@@ -37,6 +37,15 @@ open Mlir
 
 let () =
   let mlir_modul = Mlir_gen.mlirgen modul in
-  Inliner.inline_calls_in_main mlir_modul;
-  Shape_inference.infer_shapes mlir_modul;
+  let () = Inliner.inline_calls_in_main mlir_modul in
+  let () =
+    let infer_pass = Shape_inference.infer_shapes_pass () in
+    let cse_pass = Transforms.CSE.create () in
+    let pm = PassManager.create IR.Context.global_ctx in
+    let op_pm = PassManager.nested_under pm "toy.func" in
+    let () = OpPassManager.add_owned_pass op_pm infer_pass in
+    let () = PassManager.add_owned_pass pm cse_pass in
+    let _ = PassManager.run pm mlir_modul in
+    ()
+  in
   IR.Operation.dump (IR.Module.operation mlir_modul)
