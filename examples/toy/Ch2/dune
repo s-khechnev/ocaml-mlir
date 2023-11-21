@@ -1,8 +1,3 @@
-(env
- (dev
-  (flags
-   (:standard -warn-error -A))))
-
 (executable
  (public_name toy-ch2)
  (name main)

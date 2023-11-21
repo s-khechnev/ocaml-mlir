@@ -3,7 +3,6 @@ open Base
 
 let run main_func _ =
   let main_blk = IR.Region.first_block (IR.Operation.region main_func 0) in
-  let fst_op = IR.Block.first_operation main_blk in
   (* Populate the worklist with the operations that need shape inference:
      these are operations that return a dynamic shape. *)
   let worklist =
