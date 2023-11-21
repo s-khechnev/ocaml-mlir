@@ -1,6 +1,22 @@
 open Mlir
 open Base
 
+(* The ShapeInferencePass is a pass that performs intra-procedural
+   shape inference.
+
+   Algorithm:
+
+   1) Build a worklist containing all the operations that return a
+   dynamically shaped tensor: these are the operations that need shape
+   inference.
+   2) Iterate on the worklist:
+   a) find an operation to process: the next ready operation in the
+   worklist has all of its arguments non-generic,
+   b) if no operation is found, break out of the loop,
+   c) remove the operation from the worklist,
+   d) infer the shape of its output from the argument types.
+   3) If the worklist is empty, the algorithm succeeded. *)
+
 let run main_func _ =
   let main_blk = IR.Region.first_block (IR.Operation.region main_func 0) in
   (* Populate the worklist with the operations that need shape inference:
@@ -20,17 +36,17 @@ let run main_func _ =
     List.for_all opers ~f:(fun value ->
       BuiltinTypes.Tensor.is_ranked_tensor (IR.Value.get_type value))
   in
+  (* Iterate on the operations in the worklist until all operations have been
+     inferred or no change happened (fix point). *)
   let rec loop lst =
     if List.is_empty lst
     then ()
     else (
-      let next_op = List.find lst ~f:all_operands_inferred in
-      match next_op with
+      (* Find the next operation ready for inference, that is an operation
+         with all operands already resolved (non-generic). *)
+      match List.find lst ~f:all_operands_inferred with
       | Some op ->
-        let lst =
-          List.filter lst ~f:(fun curr_op -> not (IR.Operation.equal curr_op op))
-        in
-        let shape =
+        let result_shape =
           match IR.Operation.name op with
           | "toy.add" ->
             let lhs = IR.Operation.operand op 0 in
@@ -50,8 +66,11 @@ let run main_func _ =
               @@ Array.init rank ~f:(fun dim -> BuiltinTypes.Shaped.dim_size typ dim)
             in
             Mlir_gen.typ transposed_shape
-          | _ -> assert false
+          | _ -> failwith "unkown operation"
         in
+        (* Change the type of the operation result. In fact, create a similar operation,
+           but with a different type of results and insert it instead of the old operation,
+           deleting the old one. *)
         let () =
           let opers =
             List.init (IR.Operation.num_operands op) ~f:(IR.Operation.operand op)
@@ -60,13 +79,17 @@ let run main_func _ =
             IR.OperationState.get (IR.Operation.name op) (IR.Operation.loc op)
           in
           let () = IR.OperationState.add_operands op_state opers in
-          let () = IR.OperationState.add_results op_state [ shape ] in
+          let () = IR.OperationState.add_results op_state [ result_shape ] in
           let new_op = IR.Operation.create op_state in
           IR.Value.replace_uses
             ~old:(IR.Operation.result op 0)
             ~fresh:(IR.Operation.result new_op 0);
           IR.Block.insert_owned_operation_after main_blk op new_op;
           IR.Operation.destroy op
+        in
+        (* Remove infered op from lst *)
+        let lst =
+          List.filter lst ~f:(fun curr_op -> not (IR.Operation.equal curr_op op))
         in
         loop lst
       | None -> ())
