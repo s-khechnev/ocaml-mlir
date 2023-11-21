@@ -163,6 +163,12 @@ module IR = struct
       set_attribute_by_name op (StringRef.of_string name) attr
   end
 
+  module OpOperand = struct
+    include Bindings.OpOperand
+
+    let operand_number oper = operand_number oper |> Unsigned.UInt.to_int
+  end
+
   module Value = struct
     include Bindings.Value
 
@@ -172,12 +178,21 @@ module IR = struct
     let print ~callback x =
       let callback s _ = callback (StringRef.to_string s) in
       print x callback null
-  end
 
-  module OpOperand = struct
-    include Bindings.OpOperand
 
-    let operand_number oper = operand_number oper |> Unsigned.UInt.to_int
+    let replace_uses ~old ~fresh =
+      let rec find_uses oper acc =
+        if OpOperand.is_null oper
+        then acc
+        else find_uses (OpOperand.next_use oper) (oper :: acc)
+      in
+      let uses = find_uses (first_use old) [] in
+      List.iter
+        (fun oper ->
+          let owner = OpOperand.owner oper in
+          let oper_num = OpOperand.operand_number oper in
+          Operation.set_operand owner oper_num fresh)
+        uses
   end
 
   module Block = struct

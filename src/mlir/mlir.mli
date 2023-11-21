@@ -344,6 +344,9 @@ module IR : sig
     (** Returns an op operand representing the first use of the value, or a null op
         operand if there are no uses. *)
     val first_use : mlvalue -> mlop_operand
+
+    (** Replace all uses of the [old] value with [fresh]. *)
+    val replace_uses : old:mlvalue -> fresh:mlvalue -> unit
   end
 
   module OpOperand : sig
