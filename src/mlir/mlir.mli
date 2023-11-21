@@ -747,8 +747,43 @@ module BuiltinTypes : sig
   end
 
   module Shaped : sig
+    (** Checks whether the given type is a Shaped type. *)
+    val is_shaped : mltype -> bool
+
+    (** Returns the element type of the shaped type. *)
+    val element_type : mltype -> mltype
+
+    (** Checks whether the given shaped type is ranked. *)
+    val has_rank : mltype -> bool
+
+    (** Returns the rank of the given ranked shaped type. *)
+    val rank : mltype -> int
+
     (** Checks whether the given shaped type has a static shape. *)
     val has_static_shape : mltype -> bool
+
+    (** Checks wither the dim-th dimension of the given shaped type is dynamic. *)
+    val is_dynamic_dim : mltype -> int -> bool
+
+    (** Returns the dim-th dimension of the given ranked shaped type. *)
+    val dim_size : mltype -> int -> int
+
+    (** Checks whether the given value is used as a placeholder for dynamic sizes
+        in shaped types. *)
+    val is_dynamic_size : int -> bool
+
+    (** Returns the value indicating a dynamic size in a shaped type. Prefer
+        mlirShapedTypeIsDynamicSize to direct comparisons with this value. *)
+    val dynamic_size : unit -> int
+
+    (** Checks whether the given value is used as a placeholder for dynamic strides
+        and offsets in shaped types. *)
+    val is_dynamic_stride_or_offset : int -> bool
+
+    (** Returns the value indicating a dynamic stride or offset in a shaped type.
+        Prefer mlirShapedTypeGetDynamicStrideOrOffset to direct comparisons with
+        this value. *)
+    val dynamic_stride_or_offset : unit -> int
   end
 
   module Vector : sig

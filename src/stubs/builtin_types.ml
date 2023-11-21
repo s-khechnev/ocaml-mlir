@@ -145,7 +145,7 @@ module Bindings (F : FOREIGN) = struct
     let is_shaped = foreign "mlirTypeIsAShaped" (Typs.Type.t @-> returning bool)
 
     (* Returns the element type of the shaped type. *)
-    let get =
+    let element_type =
       foreign "mlirShapedTypeGetElementType" (Typs.Type.t @-> returning Typs.Type.t)
 
 
@@ -175,6 +175,10 @@ module Bindings (F : FOREIGN) = struct
     let is_dynamic_size =
       foreign "mlirShapedTypeIsDynamicSize" (int64_t @-> returning bool)
 
+
+    (* Returns the value indicating a dynamic size in a shaped type. Prefer
+       mlirShapedTypeIsDynamicSize to direct comparisons with this value. *)
+    let dynamic_size = foreign "mlirShapedTypeGetDynamicSize" (void @-> returning int64_t)
 
     (* Checks whether the given value is used as a placeholder for dynamic strides
      * and offsets in shaped types. *)

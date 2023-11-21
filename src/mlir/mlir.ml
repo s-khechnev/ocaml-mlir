@@ -409,7 +409,22 @@ module BuiltinTypes = struct
   module Index = Bindings.BuiltinTypes.Index
   module None = Bindings.BuiltinTypes.None
   module Complex = Bindings.BuiltinTypes.Complex
-  module Shaped = Bindings.BuiltinTypes.Shaped
+
+  module Shaped = struct
+    include Bindings.BuiltinTypes.Shaped
+
+    let rank typ = rank typ |> Int64.to_int
+    let is_dynamic_dim typ dim = is_dynamic_dim typ (Intptr.of_int dim)
+    let dim_size typ dim = dim_size typ (Intptr.of_int dim) |> Int64.to_int
+    let is_dynamic_size dim = is_dynamic_size (Int64.of_int dim)
+    let dynamic_size () = dynamic_size () |> Int64.to_int
+
+    let is_dynamic_stride_or_offset value =
+      is_dynamic_stride_or_offset (Int64.of_int value)
+
+
+    let dynamic_stride_or_offset () = dynamic_stride_or_offset () |> Int64.to_int
+  end
 
   module Vector = struct
     include Bindings.BuiltinTypes.Vector
