@@ -485,36 +485,33 @@ module BuiltinTypes = struct
   module MemRef = struct
     include Bindings.BuiltinTypes.MemRef
 
-    let get typ rank shape layout memspace =
+    let wrap shape =
+      let rank = Intptr.of_int (Array.length shape) in
       let shape =
         let shp = shape |> Array.map Int64.of_int |> Array.to_list in
         CArray.(start (of_list int64_t shp))
       in
-      get typ Intptr.(of_int rank) shape layout memspace
+      rank, shape
 
 
-    let contiguous typ rank shape memspace =
-      let shape =
-        let shp = shape |> Array.map Int64.of_int |> Array.to_list in
-        CArray.(start (of_list int64_t shp))
-      in
-      contiguous typ Intptr.(of_int rank) shape memspace
+    let get typ shape layout memspace =
+      let rank, shape = wrap shape in
+      get typ rank shape layout memspace
 
 
-    let contiguous_checked typ rank shape memspace loc =
-      let shape =
-        let shp = shape |> Array.map Int64.of_int |> Array.to_list in
-        CArray.(start (of_list int64_t shp))
-      in
-      contiguous_checked loc typ Intptr.(of_int rank) shape memspace
+    let checked loc typ shape layout memspace =
+      let rank, shape = wrap shape in
+      checked loc typ rank shape layout memspace
 
 
-    let unranked typ memspace = unranked typ memspace
-    let unranked_checked loc typ memspace = unranked_checked loc typ memspace
-    (* let num_affine_maps typ = num_affine_maps typ |> Intptr.to_int
-       let affine_map typ i = affine_map typ Intptr.(of_int i)
-       let memory_space typ = memory_space typ |> Unsigned.UInt.to_int
-       let unranked_memory_space typ = unranked_memory_space typ |> Unsigned.UInt.to_int *)
+    let contiguous typ shape memspace =
+      let rank, shape = wrap shape in
+      contiguous typ rank shape memspace
+
+
+    let contiguous_checked loc typ shape memspace =
+      let rank, shape = wrap shape in
+      contiguous_checked loc typ rank shape memspace
   end
 
   module Tuple = struct

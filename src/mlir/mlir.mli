@@ -833,32 +833,36 @@ module BuiltinTypes : sig
     (** Checks whether the given type is an UnrankedMemRef type. *)
     val is_unranked_memref : mltype -> bool
 
-    (** Creates a MemRef type with the given rank and shape, a potentially empty list of affine layout maps, the given memory space and element type, in the same context as element type. The type is owned by the context. *)
-    (* val get : mltype -> int array -> AffineMap.t list -> int -> mltype *)
+    (** Creates a MemRef type with the given shape, a potentially empty list of affine layout maps, the given memory space and element type, in the same context as element type. The type is owned by the context. *)
+    val get : mltype -> int array -> mlattr -> mlattr -> mltype
 
-    (** Creates a MemRef type with the given rank, shape, memory space and element type in the same context as the element type. The type has no affine maps, i.e. represents a default row-major contiguous memref. The type is owned by the context. *)
-    (* val contiguous : mltype -> int array -> int -> mltype *)
+    (** Same as `get` but returns a nullptr-wrapping MlirType o
+        illegal arguments, emitting appropriate diagnostics. *)
+    val checked : mllocation -> mltype -> int array -> mlattr -> mlattr -> mltype
+
+    (** Creates a MemRef type with the given shape, memory space and element type in the same context as the element type. The type has no affine maps, i.e. represents a default row-major contiguous memref. The type is owned by the context. *)
+    val contiguous : mltype -> int array -> mlattr -> mltype
 
     (** Same as "mlirMemRefTypeContiguousGet" but returns a nullptr wrapping MlirType on illegal arguments, emitting appropriate diagnostics. *)
-    (* val contiguous_checked : mltype -> int array -> int -> mllocation -> mltype *)
+    val contiguous_checked : mllocation -> mltype -> int array -> mlattr -> mltype
 
     (** Creates an Unranked MemRef type with the given element type and in the given memory space. The type is owned by the context of element type. *)
-    (* val unranked : mltype -> int -> mltype *)
+    val unranked : mltype -> mlattr -> mltype
 
-    (** Same as "mlirUnrankedMemRefTypeGet" but returns a nullptr wrapping MlirType on illegal arguments, emitting appropriate diagnostics. *)
-    (* val unranked_checked : mltype -> int -> mllocation -> mltype *)
+    (** Same as `unranked` but returns a nullptr wrapping MlirType on illegal arguments, emitting appropriate diagnostics. *)
+    val unranked_checked : mllocation -> mltype -> mlattr -> mltype
 
-    (** Returns the number of affine layout maps in the given MemRef type. *)
-    (* val num_affine_maps : mltype -> int *)
+    (** Returns the layout of the given MemRef type. *)
+    val layout : mltype -> mlattr
 
     (** Returns the pos-th affine map of the given MemRef type. *)
-    (* val affine_map : mltype -> int -> AffineMap.t *)
+    val affine_map : mltype -> AffineMap.t
 
     (** Returns the memory space of the given MemRef type. *)
-    (* val memory_space : mltype -> int *)
+    val memory_space : mltype -> mlattr
 
     (** Returns the memory spcae of the given Unranked MemRef type. *)
-    (* val unranked_memory_space : mltype -> int *)
+    val unranked_memory_space : mltype -> mlattr
   end
 
   module Tuple : sig
