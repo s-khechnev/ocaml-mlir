@@ -7,7 +7,7 @@ module Bindings (F : FOREIGN) = struct
   module Diagnostics = Diagnostics.Bindings (F)
   include Ir.Bindings (F)
   include Pass.Bindings (F)
-  include Register_everything.Bindings (F)
+  module RegisterEverything = Register_everything.Bindings (F)
   module BuiltinAttributes = Builtin_attributes.Bindings (F)
   module BuiltinTypes = Builtin_types.Bindings (F)
   module Transforms = Transforms.Bindings (F)

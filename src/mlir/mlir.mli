@@ -56,7 +56,10 @@ type mlident
 type mlaffine_expr
 
 (** MLIR Dialect Handle *)
-type mldialect_handle
+type mldialect_handle = Stubs.Typs.DialectHandle.t Ctypes.structure
+
+(** MLIR Dialect Registry *)
+type mldialect_registry
 
 (** MLIR Symbol Table *)
 type mlsymboltbl
@@ -126,8 +129,29 @@ module IR : sig
   end
 
   module DialectHandle : sig
-    (* val get : unit -> Stubs.Typs.DialectHandle.t Ctypes.structure *)
-    val register : Stubs.Typs.DialectHandle.t Ctypes.structure -> mlcontext -> unit
+    (** Returns the namespace associated with the provided dialect handle. *)
+    val namespace : mldialect_handle -> string
+
+    (** Inserts the dialect associated with the provided dialect handle into the
+        provided dialect registry *)
+    val insert : mldialect_handle -> mldialect_registry -> unit
+
+    (** Registers the dialect associated with the provided dialect handle. *)
+    val register : mldialect_handle -> mlcontext -> unit
+
+    (** Loads the dialect associated with the provided dialect handle. *)
+    val load : mldialect_handle -> mlcontext -> mldialect
+  end
+
+  module DialectRegistry : sig
+    (** Creates a dialect registry and transfers its ownership to the caller. *)
+    val create : unit -> mldialect_registry
+
+    (** Checks if the dialect registry is null. *)
+    val is_null : mldialect_registry -> bool
+
+    (** Takes a dialect registry owned by the caller and destroys it. *)
+    val destroy : mldialect_registry -> unit
   end
 
   module Type : sig
@@ -1267,9 +1291,16 @@ module Transforms : sig
   module ViewOpGraph : Transforms_intf.Sig with type t := mlpass
 end
 
-(** Registers all dialects known to core MLIR with the provided Context.
-    This is needed before creating IR for these Dialects. *)
-(* val register_all_dialects : mlcontext -> unit *)
+module RegisterEverything : sig
+  (** Appends all upstream dialects and extensions to the dialect registry. *)
+  val dialects : mldialect_registry -> unit
+
+  (** Register all translations to LLVM IR for dialects that can support it. *)
+  val llvm_translations : mlcontext -> unit
+
+  (** Register all compiler passes of MLIR. *)
+  val passes : unit -> unit
+end
 
 (** [with_context f]  creates a context [ctx], applies [f] to it, destroys it and returns the result of applying [f] *)
 val with_context : (mlcontext -> 'a) -> 'a

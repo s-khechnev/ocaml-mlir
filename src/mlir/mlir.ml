@@ -21,6 +21,7 @@ type mlop_pm = Typs.OpPassManager.t structured
 type mlident = Typs.Identifier.t structured
 type mlaffine_expr = Typs.AffineExpr.t structured
 type mldialect_handle = Typs.DialectHandle.t structured
+type mldialect_registry = Typs.DialectRegistry.t structured
 type mlsymboltbl = Typs.SymbolTable.t structured
 type mlop_operand = Typs.OpOperand.t structured
 type mltypeid_alloc = Typs.TypeIDAllocator.t structured
@@ -55,8 +56,10 @@ module IR = struct
   module DialectHandle = struct
     include Bindings.DialectHandle
 
-    let register dhandle ctx = register_dialect dhandle ctx
+    let namespace dhandle = namespace dhandle |> StringRef.to_string
   end
+
+  module DialectRegistry = Bindings.DialectRegistry
 
   module Type = struct
     include Bindings.Type
@@ -710,8 +713,7 @@ module BuiltinAttributes = struct
 end
 
 module Transforms = Bindings.Transforms
-
-let register_all_dialects = Bindings.register_all_dialects
+module RegisterEverything = Bindings.RegisterEverything
 
 let with_context f =
   let ctx = IR.Context.create () in

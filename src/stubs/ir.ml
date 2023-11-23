@@ -103,6 +103,7 @@ module Bindings (F : FOREIGN) = struct
     (* Returns the namespace of the given dialect. *)
     let namespace = foreign "mlirDialectGetNamespace" (t @-> returning Typs.StringRef.t)
   end
+
   (* ===----------------------------------------------------------------------===
      DialectHandle API.
      Registration entry-points for each dialect are declared using the common
@@ -118,12 +119,7 @@ module Bindings (F : FOREIGN) = struct
      This is done via a common macro to facilitate future expansion to
      registration schemes.
      ===----------------------------------------------------------------------=== *)
-
   module DialectHandle = struct
-    (* let get =
-      let f_name = Printf.sprintf "mlirGetDialectHandle__%s__" "toy" in
-      foreign f_name (void @-> returning Typs.DialectHandle.t) *)
-
     (* Returns the namespace associated with the provided dialect handle. *)
     let namespace =
       foreign
@@ -133,21 +129,21 @@ module Bindings (F : FOREIGN) = struct
 
     (* Inserts the dialect associated with the provided dialect handle into the
        provided dialect registry. *)
-    let insert_dialect =
+    let insert =
       foreign
         "mlirDialectHandleInsertDialect"
         (Typs.DialectHandle.t @-> Typs.DialectRegistry.t @-> returning void)
 
 
     (* Registers the dialect associated with the provided dialect handle. *)
-    let register_dialect =
+    let register =
       foreign
         "mlirDialectHandleRegisterDialect"
         (Typs.DialectHandle.t @-> Typs.Context.t @-> returning void)
 
 
     (* Loads the dialect associated with the provided dialect handle. *)
-    let load_dialect =
+    let load =
       foreign
         "mlirDialectHandleLoadDialect"
         (Typs.DialectHandle.t @-> Typs.Context.t @-> returning Typs.Dialect.t)
