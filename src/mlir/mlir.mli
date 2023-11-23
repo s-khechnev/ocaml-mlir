@@ -89,17 +89,11 @@ module IR : sig
     (** Checks if two contexts are equal. *)
     val equal : mlcontext -> mlcontext -> bool
 
-    (** Takes an MLIR context owned by the caller and destroys it. *)
-    val destroy : mlcontext -> unit
-
     (** Checks whether a context is null. *)
     val is_null : mlcontext -> bool
 
-    (** Returns the number of dialects registered with the given context. A registered dialect will be loaded if needed by the parser. *)
-    val num_registered_dialects : mlcontext -> int
-
-    (** Returns the number of dialects loaded by the context.*)
-    val num_loaded_dialects : mlcontext -> int
+    (** Takes an MLIR context owned by the caller and destroys it. *)
+    val destroy : mlcontext -> unit
 
     (** Sets whether unregistered dialects are allowed in this context. *)
     val set_allow_unregistered_dialects : mlcontext -> bool -> unit
@@ -107,11 +101,31 @@ module IR : sig
     (** Returns whether the context allows unregistered dialects. *)
     val get_allow_unregistered_dialects : mlcontext -> bool
 
+    (** Returns the number of dialects registered with the given context. A registered dialect will be loaded if needed by the parser. *)
+    val num_registered_dialects : mlcontext -> int
+
+    (** Append the contents of the given dialect registry to the registry associated
+        with the context. *)
+    val append_dialect_registry : mlcontext -> mldialect_registry -> unit
+
+    (** Returns the number of dialects loaded by the context.*)
+    val num_loaded_dialects : mlcontext -> int
+
     (** Gets the dialect instance owned by the given context using the dialect namespace to identify it, loads (i.e., constructs the instance of) the dialect if necessary. If the dialect is not registered with the context, returns null. Use mlirContextLoad<Name>mldialecto load an unregistered dialect. *)
     val get_or_load_dialect : mlcontext -> string -> mldialect
 
     (** Set threading mode (must be set to false to mlir-print-ir-after-all). *)
     val enable_multithreading : mlcontext -> bool -> unit
+
+    (** Eagerly loads all available dialects registered with a context, making
+        them available for use for IR construction. *)
+    val load_all_available_dialects : mlcontext -> unit
+
+    (** Returns whether the given fully-qualified operation (i.e.
+        'dialect.operation') is registered with the context. This will return true
+        if the dialect is loaded and the operation is registered within the
+        dialect. *)
+    val is_registered_op : mlcontext -> string -> bool
   end
 
   module Dialect : sig

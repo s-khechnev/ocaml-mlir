@@ -45,6 +45,7 @@ module IR = struct
     let num_registered_dialects ctx = num_registered_dialects ctx |> Signed.Long.to_int
     let num_loaded_dialects ctx = num_loaded_dialects ctx |> Signed.Long.to_int
     let get_or_load_dialect ctx s = get_or_load_dialect ctx StringRef.(of_string s)
+    let is_registered_op ctx s = is_registered_operation ctx StringRef.(of_string s)
   end
 
   module Dialect = struct
