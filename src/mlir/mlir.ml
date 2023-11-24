@@ -57,6 +57,12 @@ module IR = struct
   module DialectHandle = struct
     include Bindings.DialectHandle
 
+    let get name =
+      let str = Printf.sprintf "mlirGetDialectHandle__%s__" name in
+      let open Ctypes in
+      Foreign.foreign str (void @-> returning Stubs.Typs.DialectHandle.t) ()
+
+
     let namespace dhandle = namespace dhandle |> StringRef.to_string
   end
 

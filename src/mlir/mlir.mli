@@ -143,6 +143,8 @@ module IR : sig
   end
 
   module DialectHandle : sig
+    val get : string -> mldialect_handle
+
     (** Returns the namespace associated with the provided dialect handle. *)
     val namespace : mldialect_handle -> string
 

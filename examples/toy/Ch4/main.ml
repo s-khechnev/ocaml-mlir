@@ -36,6 +36,9 @@ let modul =
 open Mlir
 
 let () =
+  let dhandle = IR.DialectHandle.get "toy" in
+  let () = IR.DialectHandle.register dhandle IR.Context.global_ctx in
+  let _ = IR.Context.get_or_load_dialect IR.Context.global_ctx "toy" in
   let mlir_modul = Mlir_gen.mlirgen modul in
   let () = Inliner.inline_calls_in_main mlir_modul in
   let () =

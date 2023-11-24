@@ -4,13 +4,6 @@ open Parser2
 
 let symbolTable = Hashtbl.create (module String)
 
-let toy_handle =
-  let open Ctypes in
-  Foreign.foreign
-    "mlirGetDialectHandle__toy__"
-    (void @-> returning Stubs.Typs.DialectHandle.t)
-
-
 let typ shape =
   let f64 = BuiltinTypes.Float.f64 IR.Context.global_ctx in
   if Array.length shape = 0
@@ -197,9 +190,6 @@ let mlirgen_func name f_args exprs =
 
 
 let mlirgen modul =
-  let dhandle = toy_handle () in
-  let () = IR.DialectHandle.register dhandle IR.Context.global_ctx in
-  let _ = IR.Context.get_or_load_dialect IR.Context.global_ctx "toy" in
   let mlir_module = IR.Module.empty (IR.Location.unknown IR.Context.global_ctx) in
   let module_block = IR.Module.body mlir_module in
   let funcs =
