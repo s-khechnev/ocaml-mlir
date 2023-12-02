@@ -20,6 +20,7 @@ type mlpm = Typs.PassManager.t structured
 type mlop_pm = Typs.OpPassManager.t structured
 type mlident = Typs.Identifier.t structured
 type mlaffine_expr = Typs.AffineExpr.t structured
+type mlaffine_map = Typs.AffineMap.t structured
 type mldialect_handle = Typs.DialectHandle.t structured
 type mldialect_registry = Typs.DialectRegistry.t structured
 type mlsymboltbl = Typs.SymbolTable.t structured
@@ -310,8 +311,6 @@ module AffineExpr = struct
 end
 
 module AffineMap = struct
-  type t = Typs.AffineMap.t structured
-
   include Bindings.AffineMap
 
   let get ctx i j k expr =

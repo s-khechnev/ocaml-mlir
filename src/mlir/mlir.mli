@@ -55,6 +55,9 @@ type mlident
 (** MLIR Affine expr *)
 type mlaffine_expr
 
+(** MLIR Affine map *)
+type mlaffine_map
+
 (** MLIR Dialect Handle *)
 type mldialect_handle = Stubs.Typs.DialectHandle.t Ctypes.structure
 
@@ -639,83 +642,81 @@ module AffineExpr : sig
 end
 
 module AffineMap : sig
-  type t
-
   (** Gets the context that the given affine map was created with *)
-  val context : t -> mlcontext
+  val context : mlaffine_map -> mlcontext
 
   (** Checks whether an affine map is null. *)
-  val is_null : t -> bool
+  val is_null : mlaffine_map -> bool
 
   (** Checks if two affine maps are equal. *)
-  val equal : t -> t -> bool
+  val equal : mlaffine_map -> mlaffine_map -> bool
 
   (** Prints an affine map by sending chunks of the string representation and forwarding `userData to `callback`. Note that the callback may be called several times with consecutive chunks of the string. *)
-  val print : callback:(string -> unit) -> t -> unit
+  val print : callback:(string -> unit) -> mlaffine_map -> unit
 
   (** Prints the affine map to the standard error stream. *)
-  val dump : t -> unit
+  val dump : mlaffine_map -> unit
 
   (** Creates a zero result affine map with no dimensions or symbols in the context. The affine map is owned by the context. *)
-  val empty : mlcontext -> t
+  val empty : mlcontext -> mlaffine_map
 
   (** Creates a zero result affine map of the given dimensions and symbols in the context. The affine map is owned by the context. *)
-  val get : mlcontext -> int -> int -> int -> mlaffine_expr -> t
+  val get : mlcontext -> int -> int -> int -> mlaffine_expr -> mlaffine_map
 
   (** Creates a single constant result affine map in the context. The affine map is owned by the context. *)
-  val constant : mlcontext -> int -> t
+  val constant : mlcontext -> int -> mlaffine_map
 
   (** Creates an affine map with 'numDims' identity in the context. The affine map is owned by the context. *)
-  val multi_dim_identity : mlcontext -> int -> t
+  val multi_dim_identity : mlcontext -> int -> mlaffine_map
 
   (** Creates an identity affine map on the most minor dimensions in the context. The affine map is owned by the context. The function asserts that the number of dimensions is greater or equal to the number of results. *)
-  val minor_identity : mlcontext -> int -> int -> t
+  val minor_identity : mlcontext -> int -> int -> mlaffine_map
 
   (** Creates an affine map with a permutation expression and its size in the context. The permutation expression is a non-empty vector of integers. The elements of the permutation vector must be continuous from 0 and cannot be repeated (i.e. `[1,2,0]` is a valid permutation. `[2,0]` or `[1,1,2]` is an invalid invalid permutation.) The affine map is owned by the context. *)
-  val permutation : mlcontext -> int list -> t
+  val permutation : mlcontext -> int list -> mlaffine_map
 
   (** Checks whether the given affine map is an identity affine map. The function asserts that the number of dimensions is greater or equal to the number of results. *)
-  val is_identity : t -> bool
+  val is_identity : mlaffine_map -> bool
 
   (** Checks whether the given affine map is a minor identity affine map. *)
-  val is_minor_identity : t -> bool
+  val is_minor_identity : mlaffine_map -> bool
 
   (** Checks whether the given affine map is a empty affine map. *)
-  val is_empty : t -> bool
+  val is_empty : mlaffine_map -> bool
 
   (** Checks whether the given affine map is a single result constant affine map. *)
-  val is_single_constant : t -> bool
+  val is_single_constant : mlaffine_map -> bool
 
   (** Returns the constant result of the given affine map. The function asserts
       * that the map has a single constant result. *)
-  val single_constant_result : t -> int
+  val single_constant_result : mlaffine_map -> int
 
   (** Returns the number of dimensions of the given affine map. *)
-  val num_dims : t -> int
+  val num_dims : mlaffine_map -> int
 
   (** Returns the number of symbols of the given affine map. *)
-  val num_symbols : t -> int
+  val num_symbols : mlaffine_map -> int
 
   (** Returns the number of results of the given affine map. *)
-  val num_results : t -> int
+  val num_results : mlaffine_map -> int
 
   (** Returns the number of inputs (dimensions + symbols) of the given affine map. *)
-  val num_inputs : t -> int
+  val num_inputs : mlaffine_map -> int
 
   (** Checks whether the given affine map represents a subset of a symbol-less permutation map. *)
-  val is_projected_permutation : t -> bool
+  val is_projected_permutation : mlaffine_map -> bool
 
   (** Checks whether the given affine map represents a symbol-less permutation map. *)
-  val is_permutation : t -> bool
+  val is_permutation : mlaffine_map -> bool
 
   (** Returns the affine map consisting of the `resultPos` subset. *)
-  val sub_map : t -> int list -> t
+  val sub_map : mlaffine_map -> int list -> mlaffine_map
 
   (** Returns the affine map consisting of the most major `numResults` results. Returns the null AffineMap if the `numResults` is equal to zero. Returns the `affineMap` if `numResults` is greater or equals to number of results of the given affine map. *)
-  val major_sub_map : t -> int -> t
+  val major_sub_map : mlaffine_map -> int -> mlaffine_map
 
   (** Returns the affine map consisting of the most minor `numResults` results. Returns the null AffineMap if the `numResults` is equal to zero. Returns the `affineMap` if `numResults` is greater or equals to number of results of the given affine map. *)
-  val minor_sub_map : t -> int -> t
+  val minor_sub_map : mlaffine_map -> int -> mlaffine_map
 end
 
 module BuiltinTypes : sig
@@ -902,7 +903,7 @@ module BuiltinTypes : sig
     val layout : mltype -> mlattr
 
     (** Returns the pos-th affine map of the given MemRef type. *)
-    val affine_map : mltype -> AffineMap.t
+    val affine_map : mltype -> mlaffine_map
 
     (** Returns the memory space of the given MemRef type. *)
     val memory_space : mltype -> mlattr
@@ -955,10 +956,10 @@ module BuiltinAttributes : sig
     val is_affine_map : mlattr -> bool
 
     (** Creates an affine map attribute wrapping the given map. The attribute belongs to the same context as the affine map. *)
-    val get : AffineMap.t -> mlattr
+    val get : mlaffine_map -> mlattr
 
     (** Returns the affine map wrapped in the given affine map attribute. *)
-    val value : mlattr -> AffineMap.t
+    val value : mlattr -> mlaffine_map
   end
 
   module Array : sig
