@@ -399,7 +399,7 @@ module Bindings (F : FOREIGN) = struct
      * to iterate over the attribute, obtain its type, which must be a statically
      * shaped type and use its sizes to build a multi-dimensional index. *)
     let num_elements =
-      foreign "mlirElementsAttrGetNumElements" (Typs.Attribute.t @-> returning intptr_t)
+      foreign "mlirElementsAttrGetNumElements" (Typs.Attribute.t @-> returning int)
 
 
     (*===----------------------------------------------------------------------===
@@ -480,7 +480,7 @@ module Bindings (F : FOREIGN) = struct
 
     (* Get the size of a dense array *)
     let num_elements =
-      foreign "mlirDenseArrayGetNumElements" (Typs.Attribute.t @-> returning intptr_t)
+      foreign "mlirDenseArrayGetNumElements" (Typs.Attribute.t @-> returning int64_t)
 
 
     (*  Get an element of a dense array. *)

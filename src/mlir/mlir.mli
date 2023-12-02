@@ -345,6 +345,12 @@ module IR : sig
 
     (** Verify the operation and return true if it passes, false if it fails. *)
     val verify : mlop -> bool
+
+    (** Moves the given operation immediately before the other operation in its
+        parent block. The given operation may be owner by the caller or by its
+        current block. The other operation must belong to a block. In any case, the
+        ownership is transferred to the block of the other operation. *)
+    val move_before : mlop -> ref:mlop -> unit
   end
 
   module Value : sig
@@ -448,7 +454,7 @@ module IR : sig
     (** Returns `pos`-th argument of the block. *)
     val argument : mlblock -> int -> mlvalue
 
-    (** Returns operations in the block. *)
+    (** Returns operations of the block. *)
     val ops : mlblock -> mlop list
   end
 

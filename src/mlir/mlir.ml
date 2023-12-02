@@ -171,6 +171,9 @@ module IR = struct
 
     let set_attribute_by_name op name attr =
       set_attribute_by_name op (StringRef.of_string name) attr
+
+
+    let move_before op ~ref = move_before op ref
   end
 
   module OpOperand = struct
@@ -666,7 +669,7 @@ module BuiltinAttributes = struct
       is_valid_index attr size xs
 
 
-    let num_elements attrs = num_elements attrs |> Intptr.to_int
+    let num_elements attrs = num_elements attrs |> Int64.to_int
 
     module Sparse = Bindings.BuiltinAttributes.Sparse
     module Opaque = Bindings.BuiltinAttributes.Opaque
