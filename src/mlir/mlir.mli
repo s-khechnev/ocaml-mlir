@@ -1129,8 +1129,10 @@ module BuiltinAttributes : sig
 
     (** Gets the total number of elements in the given elements attribute. In order to iterate over the attribute, obtain its type, which must be a statically shaped type and use its sizes to build a multi-dimensional index. *)
     val num_elements : mlattr -> int
+  end
 
-    module Dense : sig
+  module Dense : sig
+    module Elements : sig
       (* TODO: decide on the interface and add support for complex elements. *)
       (* TODO: add support for APFloat and APInt to LLVM IR C API, then expose the relevant functions here. *)
 
@@ -1198,27 +1200,20 @@ module BuiltinAttributes : sig
       (* Returns the raw data of the given dense elements attribute. *)
       (* val raw_data : mlattr -> unit *)
     end
+  end
 
-    module Opaque : sig
-      (* TODO: expose mldialecto the bindings and implement accessors here. *)
+  module Sparse : sig
+    (** Checks whether the given attribute is a sparse elements attribute. *)
+    val is_sparse : mlattr -> bool
 
-      (** Checks whether the given attribute is an opaque elements attribute. *)
-      val is_opaque : mlattr -> bool
-    end
+    (** Creates a sparse elements attribute of the given shape from a list of indices and a list of associated s. Both lists are expected to be dense elements attributes with the same number of elements. The list of indices is expected to contain 64-bit integers. The attribute is created in the same context as the type. *)
+    val create : mltype -> mlattr -> mlattr -> mlattr
 
-    module Sparse : sig
-      (** Checks whether the given attribute is a sparse elements attribute. *)
-      val is_sparse : mlattr -> bool
+    (** Returns the dense elements attribute containing 64-bit integer indices of non-null elements in the given sparse elements attribute. *)
+    val indices : mlattr -> mlattr
 
-      (** Creates a sparse elements attribute of the given shape from a list of indices and a list of associated s. Both lists are expected to be dense elements attributes with the same number of elements. The list of indices is expected to contain 64-bit integers. The attribute is created in the same context as the type. *)
-      val create : mltype -> mlattr -> mlattr -> mlattr
-
-      (** Returns the dense elements attribute containing 64-bit integer indices of non-null elements in the given sparse elements attribute. *)
-      val indices : mlattr -> mlattr
-
-      (** Returns the dense elements attribute containing the non-null elements in the given sparse elements attribute. *)
-      val values : mlattr -> mlattr
-    end
+    (** Returns the dense elements attribute containing the non-null elements in the given sparse elements attribute. *)
+    val values : mlattr -> mlattr
   end
 end
 

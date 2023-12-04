@@ -41,7 +41,7 @@ let mlirgen_proto name args =
 let rec mlirgen_expr block =
   let const_op shp values =
     let typ = typ shp in
-    let attr = BuiltinAttributes.Elements.Dense.double_get typ values in
+    let attr = BuiltinAttributes.Dense.Elements.double_get typ values in
     let named_attr =
       IR.Attribute.name (IR.Identifier.get IR.Context.global_ctx "value") attr
     in

@@ -669,12 +669,11 @@ module BuiltinAttributes = struct
 
 
     let num_elements attrs = num_elements attrs |> Int64.to_int
+  end
 
-    module Sparse = Bindings.BuiltinAttributes.Sparse
-    module Opaque = Bindings.BuiltinAttributes.Opaque
-
-    module Dense = struct
-      include Bindings.BuiltinAttributes.Dense
+  module Dense = struct
+    module Elements = struct
+      include Bindings.BuiltinAttributes.Dense.Elements
 
       let get attr xs =
         let size = List.length xs |> Intptr.of_int in
@@ -719,6 +718,8 @@ module BuiltinAttributes = struct
       let string_value x i = string_value x Intptr.(of_int i) |> StringRef.to_string
     end
   end
+
+  module Sparse = Bindings.BuiltinAttributes.Sparse
 end
 
 module Transforms = Bindings.Transforms
