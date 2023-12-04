@@ -286,6 +286,9 @@ def ReshapeOp : Toy_Op<"reshape", [Pure]> {
   let assemblyFormat = [{
     `(` $input `:` type($input) `)` attr-dict `to` type(results)
   }];
+
+  // Enable registering canonicalization patterns with this operation.
+  let hasCanonicalizer = 1;
 }
 
 //===----------------------------------------------------------------------===//
@@ -351,6 +354,9 @@ def TransposeOp : Toy_Op<"transpose", [Pure]> {
 
   // Invoke a static verify method to verify this transpose operation.
   let hasVerifier = 1;
+
+  // Enable registering canonicalization patterns with this operation.
+  let hasCanonicalizer = 1;
 }
 
 #endif // TOY_OPS

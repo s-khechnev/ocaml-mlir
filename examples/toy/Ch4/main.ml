@@ -44,9 +44,11 @@ let () =
   let () =
     let infer_pass = Shape_inference.infer_shapes_pass () in
     let cse_pass = Transforms.CSE.create () in
+    let canon_pass = Transforms.Canonicalizer.create () in
     let pm = PassManager.create IR.Context.global_ctx in
     let op_pm = PassManager.nested_under pm "toy.func" in
     let () = OpPassManager.add_owned_pass op_pm infer_pass in
+    let () = OpPassManager.add_owned_pass op_pm canon_pass in
     let () = PassManager.add_owned_pass pm cse_pass in
     let _ = PassManager.run pm mlir_modul in
     ()
