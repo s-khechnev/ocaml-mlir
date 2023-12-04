@@ -408,72 +408,72 @@ module Bindings (F : FOREIGN) = struct
   module Dense = struct
     module Array = struct
       (* Checks whether the given attribute is a dense array attribute. *)
-      let is_dense_bool_arr =
+      let is_bool =
         foreign "mlirAttributeIsADenseBoolArray" (Typs.Attribute.t @-> returning bool)
 
 
-      let is_dense_int8_arr =
+      let is_i8 =
         foreign "mlirAttributeIsADenseI8Array" (Typs.Attribute.t @-> returning bool)
 
 
-      let is_dense_int16_arr =
+      let is_i16 =
         foreign "mlirAttributeIsADenseI16Array" (Typs.Attribute.t @-> returning bool)
 
 
-      let is_dense_int32_arr =
+      let is_i32 =
         foreign "mlirAttributeIsADenseI32Array" (Typs.Attribute.t @-> returning bool)
 
 
-      let is_dense_int64_arr =
+      let is_i64 =
         foreign "mlirAttributeIsADenseI64Array" (Typs.Attribute.t @-> returning bool)
 
 
-      let is_dense_float_arr =
+      let is_f32 =
         foreign "mlirAttributeIsADenseF32Array" (Typs.Attribute.t @-> returning bool)
 
 
-      let is_dense_double_arr =
+      let is_f64 =
         foreign "mlirAttributeIsADenseF64Array" (Typs.Attribute.t @-> returning bool)
 
 
       (* Create a dense array attribute with the given elements. *)
-      let dense_bool_arr =
+      let bool =
         foreign
           "mlirDenseBoolArrayGet"
           (Typs.Context.t @-> intptr_t @-> ptr int @-> returning Typs.Attribute.t)
 
 
-      let dense_int8_arr =
+      let i8 =
         foreign
           "mlirDenseI8ArrayGet"
           (Typs.Context.t @-> intptr_t @-> ptr int8_t @-> returning Typs.Attribute.t)
 
 
-      let dense_int16_arr =
+      let i16 =
         foreign
           "mlirDenseI16ArrayGet"
           (Typs.Context.t @-> intptr_t @-> ptr int16_t @-> returning Typs.Attribute.t)
 
 
-      let dense_int32_arr =
+      let i32 =
         foreign
           "mlirDenseI32ArrayGet"
           (Typs.Context.t @-> intptr_t @-> ptr int32_t @-> returning Typs.Attribute.t)
 
 
-      let dense_int64_arr =
+      let i64 =
         foreign
           "mlirDenseI64ArrayGet"
           (Typs.Context.t @-> intptr_t @-> ptr int64_t @-> returning Typs.Attribute.t)
 
 
-      let dense_float_arr =
+      let f32 =
         foreign
           "mlirDenseF32ArrayGet"
           (Typs.Context.t @-> intptr_t @-> ptr float @-> returning Typs.Attribute.t)
 
 
-      let dense_double_arr =
+      let f64 =
         foreign
           "mlirDenseF64ArrayGet"
           (Typs.Context.t @-> intptr_t @-> ptr double @-> returning Typs.Attribute.t)
@@ -481,47 +481,47 @@ module Bindings (F : FOREIGN) = struct
 
       (* Get the size of a dense array *)
       let num_elements =
-        foreign "mlirDenseArrayGetNumElements" (Typs.Attribute.t @-> returning int64_t)
+        foreign "mlirDenseArrayGetNumElements" (Typs.Attribute.t @-> returning intptr_t)
 
 
       (*  Get an element of a dense array. *)
-      let dense_bool_arr_element =
+      let bool_elt =
         foreign
           "mlirDenseBoolArrayGetElement"
-          (Typs.Attribute.t @-> intptr_t @-> returning bool)
+          (Typs.Attribute.t @-> intptr_t @-> returning Ctypes.(bool))
 
 
-      let dense_int8_arr_element =
+      let i8_elt =
         foreign
           "mlirDenseI8ArrayGetElement"
           (Typs.Attribute.t @-> intptr_t @-> returning int8_t)
 
 
-      let dense_int16_arr_element =
+      let i16_elt =
         foreign
           "mlirDenseI8ArrayGetElement"
           (Typs.Attribute.t @-> intptr_t @-> returning int16_t)
 
 
-      let dense_int32_arr_element =
+      let i32_elt =
         foreign
           "mlirDenseI32ArrayGetElement"
           (Typs.Attribute.t @-> intptr_t @-> returning int32_t)
 
 
-      let dense_int64_arr_element =
+      let i64_elt =
         foreign
           "mlirDenseI64ArrayGetElement"
           (Typs.Attribute.t @-> intptr_t @-> returning int64_t)
 
 
-      let dense_float_arr_element =
+      let f32_elt =
         foreign
           "mlirDenseF32ArrayGetElement"
           (Typs.Attribute.t @-> intptr_t @-> returning float)
 
 
-      let dense_double_arr_element =
+      let f64_elt =
         foreign
           "mlirDenseF64ArrayGetElement"
           (Typs.Attribute.t @-> intptr_t @-> returning double)

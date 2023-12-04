@@ -672,6 +672,36 @@ module BuiltinAttributes = struct
   end
 
   module Dense = struct
+    let _wrapper_get f t g =
+      let dummy typ xs =
+        let xs = List.map g xs in
+        let size = List.length xs |> Intptr.of_int in
+        let xs = CArray.(start (of_list t xs)) in
+        f typ size xs
+      in
+      dummy
+
+
+    module Array = struct
+      include Bindings.BuiltinAttributes.Dense.Array
+
+      let bool = _wrapper_get bool int Fun.id
+      let i8 = _wrapper_get i8 int8_t Fun.id
+      let i16 = _wrapper_get i16 int16_t Fun.id
+      let i32 = _wrapper_get i32 int32_t Int32.of_int
+      let i64 = _wrapper_get i64 int64_t Int64.of_int
+      let f32 = _wrapper_get f32 float Fun.id
+      let f64 = _wrapper_get f64 double Fun.id
+      let num_elements attr = num_elements attr |> Intptr.to_int
+      let bool_elt attr pos = bool_elt attr (Intptr.of_int pos)
+      let i8_elt attr pos = i8_elt attr (Intptr.of_int pos)
+      let i16_elt attr pos = i16_elt attr (Intptr.of_int pos)
+      let i32_elt attr pos = i32_elt attr (Intptr.of_int pos) |> Int32.to_int
+      let i64_elt attr pos = i64_elt attr (Intptr.of_int pos) |> Int64.to_int
+      let f32_elt attr pos = f32_elt attr (Intptr.of_int pos)
+      let f64_elt attr pos = f64_elt attr (Intptr.of_int pos)
+    end
+
     module Elements = struct
       include Bindings.BuiltinAttributes.Dense.Elements
 
@@ -685,17 +715,6 @@ module BuiltinAttributes = struct
       let int32_splat_get typ i = int32_splat_get typ Int32.(of_int i)
       let uint64_splat_get typ i = uint64_splat_get typ Unsigned.UInt64.(of_int i)
       let int64_splat_get typ i = int64_splat_get typ Int64.(of_int i)
-
-      let _wrapper_get f t g =
-        let dummy typ xs =
-          let xs = List.map g xs in
-          let size = List.length xs |> Intptr.of_int in
-          let xs = CArray.(start (of_list t xs)) in
-          f typ size xs
-        in
-        dummy
-
-
       let bool_get = _wrapper_get bool_get int (fun x -> x)
       let uint32_get = _wrapper_get uint32_get uint32_t Unsigned.UInt32.of_int
       let int32_get = _wrapper_get int32_get int32_t Int32.of_int

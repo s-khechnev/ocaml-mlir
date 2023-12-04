@@ -1132,6 +1132,37 @@ module BuiltinAttributes : sig
   end
 
   module Dense : sig
+    module Array : sig
+      (* Checks whether the given attribute is a dense array attribute. *)
+      val is_bool : mlattr -> bool
+      val is_i8 : mlattr -> bool
+      val is_i16 : mlattr -> bool
+      val is_i32 : mlattr -> bool
+      val is_f32 : mlattr -> bool
+      val is_f64 : mlattr -> bool
+
+      (* Create a dense array attribute with the given elements. *)
+      val bool : mlcontext -> int list -> mlattr
+      val i8 : mlcontext -> int list -> mlattr
+      val i16 : mlcontext -> int list -> mlattr
+      val i32 : mlcontext -> int list -> mlattr
+      val i64 : mlcontext -> int list -> mlattr
+      val f32 : mlcontext -> float list -> mlattr
+      val f64 : mlcontext -> float list -> mlattr
+
+      (* Get the size of a dense array. *)
+      val num_elements : mlattr -> int
+
+      (* Get an element of a dense array. *)
+      val bool_elt : mlattr -> int -> bool
+      val i8_elt : mlattr -> int -> int
+      val i16_elt : mlattr -> int -> int
+      val i32_elt : mlattr -> int -> int
+      val i64_elt : mlattr -> int -> int
+      val f32_elt : mlattr -> int -> float
+      val f64_elt : mlattr -> int -> float
+    end
+
     module Elements : sig
       (* TODO: decide on the interface and add support for complex elements. *)
       (* TODO: add support for APFloat and APInt to LLVM IR C API, then expose the relevant functions here. *)
