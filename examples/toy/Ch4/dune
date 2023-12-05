@@ -18,7 +18,7 @@
  (deps libToyCAPI.so libMLIRToy.so)
  (action
   (bash
-   "echo \"-Wl,-rpath,`llvm-config-16 --libdir` -L`llvm-config-16 --libdir` -lMLIRIR -lMLIRTransforms -lMLIRSideEffectInterfaces -lMLIRCastInterfaces -lMLIRCallInterfaces -lMLIRAnalysis -Wl,-rpath,`pwd` -L`pwd` -lMLIRToy -lToyCAPI \" > toy_flags")))
+   "echo \"-Wl,-rpath,`llvm-config-16 --libdir` -Wl,-rpath,`pwd` -L`pwd` -lMLIRToy -lToyCAPI \" > toy_flags")))
 
 (data_only_dirs dialect)
 
