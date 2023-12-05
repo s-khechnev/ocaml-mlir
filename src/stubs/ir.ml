@@ -690,7 +690,7 @@ module Bindings (F : FOREIGN) = struct
     let equal = foreign "mlirBlockEqual" (Typs.Block.t @-> Typs.Block.t @-> returning bool)
 
     (* Returns the closest surrounding operation that contains this block. *)
-    let parent_operation =
+    let parent_op =
       foreign "mlirBlockGetParentOperation" (Typs.Block.t @-> returning Typs.Operation.t)
 
 

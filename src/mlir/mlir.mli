@@ -429,6 +429,9 @@ module IR : sig
     (** Checks whether a block is null. *)
     val is_null : mlblock -> bool
 
+    (** Returns the closest surrounding operation that contains this block. *)
+    val parent_op : mlblock -> mlop
+
     (** Returns the first operation in the block. *)
     val first_operation : mlblock -> mlop
 
