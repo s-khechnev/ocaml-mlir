@@ -60,6 +60,24 @@ let affine_store_op loc value_to_store memref indices =
   IR.Operation.create affine_store_op_st
 
 
+let affine_load_op loc ivs alloc =
+  let affine_load_op_st = IR.OperationState.get "affine.load" loc in
+  let mref_typ = IR.Value.get_type alloc in
+  let map = map mref_typ in
+  IR.OperationState.add_named_attributes
+    affine_load_op_st
+    [ IR.Attribute.name
+        (IR.Identifier.get IR.Context.global_ctx "map")
+        (BuiltinAttributes.AffineMap.get map)
+    ];
+  IR.OperationState.add_operands affine_load_op_st [ alloc ];
+  IR.OperationState.add_operands affine_load_op_st ivs;
+  IR.OperationState.add_results
+    affine_load_op_st
+    [ BuiltinTypes.Float.f64 IR.Context.global_ctx ];
+  IR.Operation.create affine_load_op_st
+
+
 let build_loop_from_consts loc lb ub body_builder =
   let lb_map = AffineMap.constant IR.Context.global_ctx lb in
   let ub_map = AffineMap.constant IR.Context.global_ctx ub in
@@ -152,23 +170,7 @@ let lower_op_to_loops op blk body_builder =
 let lower_bin_op op blk =
   let body_builder blk loc ivs =
     let lhs, rhs = IR.Operation.(operand op 0, operand op 1) in
-    let affine_load_op alloc =
-      let affine_load_op_st = IR.OperationState.get "affine.load" loc in
-      let mref_typ = IR.Value.get_type alloc in
-      let map = map mref_typ in
-      IR.OperationState.add_named_attributes
-        affine_load_op_st
-        [ IR.Attribute.name
-            (IR.Identifier.get IR.Context.global_ctx "map")
-            (BuiltinAttributes.AffineMap.get map)
-        ];
-      IR.OperationState.add_operands affine_load_op_st [ alloc ];
-      IR.OperationState.add_operands affine_load_op_st ivs;
-      IR.OperationState.add_results
-        affine_load_op_st
-        [ BuiltinTypes.Float.f64 IR.Context.global_ctx ];
-      IR.Operation.create affine_load_op_st
-    in
+    let affine_load_op = affine_load_op loc ivs in
     let loaded_lhs, loaded_rhs = affine_load_op lhs, affine_load_op rhs in
     let lowered_bin_op =
       let bin_op name =
@@ -313,13 +315,27 @@ let change_print op blk =
   IR.Block.insert_owned_operation_after blk op print_op
 
 
+let lower_transpose op blk =
+  let body_builder blk loc ivs =
+    let input = IR.Operation.operand op 0 in
+    let ivs = List.rev ivs in
+    let load = affine_load_op loc ivs input in
+    IR.Block.append_owned_operation blk load;
+    IR.Operation.result load 0
+  in
+  let alloc, for_op = lower_op_to_loops op blk body_builder in
+  IR.Value.replace_uses ~old:(IR.Operation.result op 0) ~fresh:alloc;
+  IR.Block.insert_owned_operation_after blk op for_op
+
+
 let lower_op op blk =
   match IR.Operation.name op with
   | "toy.constant" -> lower_const_op op blk
   | "toy.add" | "toy.mul" -> lower_bin_op op blk
   | "toy.return" -> lower_return op blk
   | "toy.print" -> change_print op blk
-  | _ -> ()
+  | "toy.transpose" -> lower_transpose op blk
+  | _ -> failwith "unknown op"
 
 
 let lower modul =
@@ -331,5 +347,4 @@ let lower modul =
       lower_op op main_blk;
       IR.Operation.destroy op)
   in
-  lower_func main;
-  IR.Operation.dump @@ IR.Module.operation modul
+  lower_func main

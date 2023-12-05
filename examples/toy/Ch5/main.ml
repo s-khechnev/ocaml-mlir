@@ -12,7 +12,7 @@ let modul =
       ( Prototype ("main", [])
       , [ (* VarDecl ("a", [| 2 |], Literal ([| 2 |], [ Num 1.0; Num 2.0 ])) *)
           VarDecl ("a", [| 2 |], Literal ([| 2 |], [ Num 1.0; Num 2.0 ]))
-        ; VarDecl ("b", [| 2 |], Literal ([| 2 |], [ Num 3.0; Num 4.0 ]))
+        ; VarDecl ("b", [||], Call ("transpose", [ Var "a" ]))
         ; VarDecl ("c", [||], BinOp ('+', Var "a", Var "b"))
         ; Print (Var "c")
         ; Return None
@@ -48,4 +48,5 @@ let () =
   let _ = IR.Context.get_or_load_dialect IR.Context.global_ctx "memref" in
   let _ = IR.Context.get_or_load_dialect IR.Context.global_ctx "arith" in
   let _ = IR.Context.get_or_load_dialect IR.Context.global_ctx "func" in
-  Lower_to_affine.lower mlir_modul
+  Lower_to_affine.lower mlir_modul;
+  IR.Operation.dump @@ IR.Module.operation mlir_modul
