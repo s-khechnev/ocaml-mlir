@@ -94,7 +94,15 @@ let run main_func _ =
         loop lst
       | None -> ())
   in
-  loop worklist
+  loop worklist;
+  (* remove casts *)
+  List.iter (IR.Block.ops main_blk) ~f:(fun op ->
+    if String.equal (IR.Operation.name op) "toy.cast"
+    then (
+      IR.Value.replace_uses
+        ~old:(IR.Operation.result op 0)
+        ~fresh:(IR.Operation.operand op 0);
+      IR.Operation.destroy op))
 
 
 let infer_shapes_pass () =
