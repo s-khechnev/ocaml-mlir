@@ -338,9 +338,8 @@ let lower_op op blk =
   | _ -> failwith "unknown op"
 
 
-let lower modul =
-  let modul_blk = IR.Module.body modul in
-  let main = IR.Block.first_operation modul_blk in
+let run main _ =
+  IR.Operation.dump (IR.Block.parent_op @@ IR.Operation.block main);
   let main_blk = IR.Region.first_block (IR.Operation.region main 0) in
   let () =
     List.iter (IR.Block.ops main_blk) ~f:(fun op ->
@@ -348,3 +347,17 @@ let lower modul =
       IR.Operation.destroy op)
   in
   lower_func main
+
+
+let lower_to_affine_pass () =
+  let callbacks = { ExternalPass.empty_callbacks with run } in
+  let alloc = TypeIDAllocator.create () in
+  let typ_id = TypeIDAllocator.allocate_type_id alloc in
+  ExternalPass.create
+    typ_id
+    ~name:"lower_to_affine"
+    ~arg:""
+    ~desc:"Lowering to affine"
+    ~op_name:""
+    ~dep_dialects:[]
+    callbacks
