@@ -47,4 +47,5 @@ let () =
   let _ = IR.Context.get_or_load_dialect IR.Context.global_ctx "affine" in
   let _ = IR.Context.get_or_load_dialect IR.Context.global_ctx "memref" in
   let _ = IR.Context.get_or_load_dialect IR.Context.global_ctx "arith" in
+  let _ = IR.Context.get_or_load_dialect IR.Context.global_ctx "func" in
   Lower_to_affine.lower mlir_modul

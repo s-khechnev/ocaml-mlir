@@ -336,6 +336,12 @@ module IR : sig
     (** Returns `pos`-th result of the operation. *)
     val result : mlop -> int -> mlvalue
 
+    (** Returns the number of attributes attached to the operation. *)
+    val num_attributes : mlop -> int
+
+    (** Return `pos`-th attribute of the operation. *)
+    val attribute : mlop -> int -> mlnamed_attr
+
     (** Returns an attribute attached to the operation given its name. *)
     val attribute_by_name : mlop -> string -> mlattr
 

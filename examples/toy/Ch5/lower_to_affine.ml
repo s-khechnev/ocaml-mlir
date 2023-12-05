@@ -170,11 +170,9 @@ let lower_bin_op op blk =
       IR.Operation.create affine_load_op_st
     in
     let loaded_lhs, loaded_rhs = affine_load_op lhs, affine_load_op rhs in
-    let _ = IR.Operation.verify loaded_lhs in
     let lowered_bin_op =
-      match IR.Operation.name op with
-      | "toy.add" ->
-        let add_op_st = IR.OperationState.get "arith.addf" loc in
+      let bin_op name =
+        let add_op_st = IR.OperationState.get name loc in
         IR.OperationState.add_operands
           add_op_st
           IR.Operation.[ result loaded_lhs 0; result loaded_rhs 0 ];
@@ -182,7 +180,10 @@ let lower_bin_op op blk =
           add_op_st
           [ BuiltinTypes.Float.f64 IR.Context.global_ctx ];
         IR.Operation.create add_op_st
-      | "toy.mul" -> assert false
+      in
+      match IR.Operation.name op with
+      | "toy.add" -> bin_op "arith.addf"
+      | "toy.mul" -> bin_op "arith.msulf"
       | _ -> assert false
     in
     IR.Block.append_owned_operation blk loaded_lhs;
@@ -273,10 +274,40 @@ let lower_const_op op blk =
   Inliner.insert_ops_after blk op (Array.to_list const_indices @ ops)
 
 
+let lower_return op blk =
+  if IR.Operation.num_operands op <> 0 then failwith "Return must not have an operand";
+  let func_ret_op =
+    IR.Operation.create @@ IR.OperationState.get "func.return" (IR.Operation.loc op)
+  in
+  IR.Block.insert_owned_operation_before blk op func_ret_op
+
+
+let lower_func op =
+  if IR.Operation.(num_operands op <> 0 || num_results op <> 0)
+  then failwith "expected 'main' to have 0 inputs and 0 results";
+  let func_op =
+    let op = IR.Operation.clone op in
+    let func_op_st = IR.OperationState.get "func.func" (IR.Operation.loc op) in
+    let attrs =
+      List.init (IR.Operation.num_attributes op) ~f:(fun n -> IR.Operation.attribute op n)
+    in
+    IR.OperationState.add_named_attributes func_op_st attrs;
+    let reg = IR.Region.create () in
+    let main_blk = IR.Region.first_block (IR.Operation.region op 0) in
+    IR.Region.append_owned_block reg main_blk;
+    IR.OperationState.add_owned_regions func_op_st [ reg ];
+    IR.Operation.create func_op_st
+  in
+  let modul_blk = IR.Operation.block op in
+  IR.Block.append_owned_operation modul_blk func_op;
+  IR.Operation.destroy op
+
+
 let lower_op op blk =
   match IR.Operation.name op with
   | "toy.constant" -> lower_const_op op blk
   | "toy.add" | "toy.mul" -> lower_bin_op op blk
+  | "toy.return" -> lower_return op blk
   | _ -> ()
 
 
@@ -286,11 +317,8 @@ let lower modul =
   let main_blk = IR.Region.first_block (IR.Operation.region main 0) in
   let () =
     List.iter (IR.Block.ops main_blk) ~f:(fun op ->
-      let op_name = IR.Operation.name op in
-      if String.equal op_name "toy.return"
-      then () (* toy print deletede   NOWWWWWWWWWWWWWWWWWWWW *)
-      else (
-        lower_op op main_blk;
-        IR.Operation.destroy op (* IR.Operation.dump @@ IR.Module.operation modul *)))
+      lower_op op main_blk;
+      IR.Operation.destroy op)
   in
+  lower_func main;
   IR.Operation.dump @@ IR.Module.operation modul

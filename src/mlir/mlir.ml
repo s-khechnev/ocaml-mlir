@@ -168,6 +168,8 @@ module IR = struct
     let set_operand op pos value = set_operand op Intptr.(of_int pos) value
     let num_results op = num_results op |> Intptr.to_int
     let result x pos = Bindings.Operation.result x Intptr.(of_int pos)
+    let num_attributes op = num_attributes op |> Intptr.to_int
+    let attribute op pos = attribute op (Intptr.of_int pos)
     let attribute_by_name op name = attribute_by_name op (StringRef.of_string name)
 
     let set_attribute_by_name op name attr =
