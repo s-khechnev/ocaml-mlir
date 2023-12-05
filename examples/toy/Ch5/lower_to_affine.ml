@@ -146,7 +146,7 @@ let lower_op_to_loops op blk body_builder =
     let affine_store = affine_store_op loc value_to_store alloc ivs in
     IR.Block.insert_owned_operation_after blk op affine_store
   in
-  build_loop_nest loc lower_bounds shape body_builder
+  alloc, build_loop_nest loc lower_bounds shape body_builder
 
 
 let lower_bin_op op blk =
@@ -191,7 +191,8 @@ let lower_bin_op op blk =
     IR.Block.append_owned_operation blk lowered_bin_op;
     IR.Operation.result lowered_bin_op 0
   in
-  let for_op = lower_op_to_loops op blk body_builder in
+  let alloc, for_op = lower_op_to_loops op blk body_builder in
+  IR.Value.replace_uses ~old:(IR.Operation.result op 0) ~fresh:alloc;
   IR.Block.insert_owned_operation_after blk op for_op
 
 
@@ -303,11 +304,21 @@ let lower_func op =
   IR.Operation.destroy op
 
 
+let change_print op blk =
+  let print_op =
+    let print_op_st = IR.OperationState.get "toy.print" (IR.Operation.loc op) in
+    let () = IR.OperationState.add_operands print_op_st [ IR.Operation.operand op 0 ] in
+    IR.Operation.create print_op_st
+  in
+  IR.Block.insert_owned_operation_after blk op print_op
+
+
 let lower_op op blk =
   match IR.Operation.name op with
   | "toy.constant" -> lower_const_op op blk
   | "toy.add" | "toy.mul" -> lower_bin_op op blk
   | "toy.return" -> lower_return op blk
+  | "toy.print" -> change_print op blk
   | _ -> ()
 
 
