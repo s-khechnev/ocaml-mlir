@@ -16,8 +16,8 @@ mlir_toy: tblgen
 	c++ -shared build/ToyDialect.o build/ToyCombine.o ${cxxflags} -o build/libMLIRToy.so
 
 capi_toy: mlir_toy
-	c++ -fPIC -Wall -c dialect/CAPI/Dialects.cpp -Idialect/include -I${includedir} ${cxxflags} -Ibuild/include/ -o build/libToyCAPI.o
-	c++ -shared build/libToyCAPI.o ${cxxflags} -o build/libToyCAPI.so
+	c++ -fPIC -Wall -c dialect/CAPI/Dialects.cpp -Idialect/include -I${includedir} ${cxxflags} -Ibuild/include/ -o build/ToyCAPI.o
+	c++ -shared build/ToyCAPI.o ${cxxflags} -o build/libToyCAPI.so
 
 clean:
 	rm -rf build
