@@ -3,9 +3,9 @@ open Base
 open Parser2
 
 let symbolTable = Hashtbl.create (module String)
+let f64 = BuiltinTypes.Float.f64 IR.Context.global_ctx
 
 let typ shape =
-  let f64 = BuiltinTypes.Float.f64 IR.Context.global_ctx in
   if Array.length shape = 0
   then BuiltinTypes.Tensor.unranked f64
   else BuiltinTypes.Tensor.ranked shape f64 BuiltinAttributes.null
@@ -40,7 +40,11 @@ let mlirgen_proto name args =
 
 let rec mlirgen_expr block =
   let const_op shp values =
-    let typ = typ shp in
+    let typ =
+      match shp with
+      | [||] -> BuiltinTypes.Tensor.ranked [||] f64 BuiltinAttributes.null
+      | _ -> typ shp
+    in
     let attr = BuiltinAttributes.Dense.Elements.double_get typ values in
     let named_attr =
       IR.Attribute.name (IR.Identifier.get IR.Context.global_ctx "value") attr
@@ -57,7 +61,7 @@ let rec mlirgen_expr block =
     IR.Operation.result op 0
   in
   function
-  | Ast.Num n -> append_operation_and_get_result (const_op [| 0 |] [ n ])
+  | Ast.Num n -> append_operation_and_get_result (const_op [||] [ n ])
   | Ast.Literal (shp, exs) ->
     let values =
       let rec helper acc = function
