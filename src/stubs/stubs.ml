@@ -2,6 +2,10 @@ open Ctypes
 module Typs = Typs
 
 module Bindings (F : FOREIGN) = struct
+  module Dialect = struct
+    module LLVM = Llvm.Bindings (F)
+  end
+
   module AffineExpr = Affine_expr.Bindings (F)
   module AffineMap = Affine_map.Bindings (F)
   module Diagnostics = Diagnostics.Bindings (F)

@@ -763,6 +763,27 @@ end
 module Transforms = Bindings.Transforms
 module RegisterEverything = Bindings.RegisterEverything
 
+module Dialect = struct
+  module LLVM = struct
+    include Bindings.Dialect.LLVM
+
+    let ptr typ addr_space = pointer typ (Unsigned.UInt.of_int addr_space)
+    let void ctx = void_t ctx
+    let arr el_typ n = arr el_typ (Unsigned.UInt.of_int n)
+
+    let func res_typ args is_var_arg =
+      let n = List.length args |> Intptr.of_int in
+      let args = CArray.(start (of_list Typs.Type.t args)) in
+      func res_typ n args is_var_arg
+
+
+    let literal_struct ctx typs is_packed =
+      let n = List.length typs |> Intptr.of_int in
+      let typs = CArray.(start (of_list Typs.Type.t typs)) in
+      literal_struct ctx n typs is_packed
+  end
+end
+
 let with_context f =
   let ctx = IR.Context.create () in
   let result = f ctx in

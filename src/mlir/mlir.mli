@@ -1380,6 +1380,27 @@ module RegisterEverything : sig
   val passes : unit -> unit
 end
 
+module Dialect : sig
+  module LLVM : sig
+    val get : unit -> mldialect_handle
+
+    (** Creates an llvm.ptr type. *)
+    val ptr : mltype -> int -> mltype
+
+    (** Creates an llmv.void type. *)
+    val void : mlcontext -> mltype
+
+    (** Creates an llvm.array type. *)
+    val arr : mltype -> int -> mltype
+
+    (** Creates an llvm.func type. *)
+    val func : mltype -> mltype list -> bool -> mltype
+
+    (** Creates an LLVM literal (unnamed) struct type. *)
+    val literal_struct : mlcontext -> mltype list -> bool -> mltype
+  end
+end
+
 (** [with_context f]  creates a context [ctx], applies [f] to it, destroys it and returns the result of applying [f] *)
 val with_context : (mlcontext -> 'a) -> 'a
 
