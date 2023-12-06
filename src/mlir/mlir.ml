@@ -237,6 +237,17 @@ module IR = struct
         if Operation.is_null op then acc else loop (Operation.next_in_block op) (op :: acc)
       in
       loop (first_operation blk) [] |> List.rev
+
+
+    let insert_ops_after blk after ops =
+      let rec loop ops prev_op =
+        match ops with
+        | op :: tl ->
+          let () = insert_owned_operation_after blk prev_op op in
+          loop tl op
+        | _ -> ()
+      in
+      loop ops after
   end
 
   module Module = struct

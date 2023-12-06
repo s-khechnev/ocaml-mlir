@@ -12,17 +12,6 @@ let rec find_func_by_name op name =
     else find_func_by_name (IR.Operation.next_in_block op) name)
 
 
-let insert_ops_after blk after ops =
-  let rec loop ops prev_op =
-    match ops with
-    | op :: tl ->
-      let () = IR.Block.insert_owned_operation_after blk prev_op op in
-      loop tl op
-    | _ -> ()
-  in
-  loop ops after
-
-
 let inline_calls_in_main modul =
   let modul_blk = IR.Module.body modul in
   let fst_func = IR.Block.first_operation modul_blk in
@@ -83,7 +72,7 @@ let inline_calls_in_main modul =
             List.filter (IR.Block.ops callee_blk) ~f:(fun op ->
               not (IR.Operation.equal op (IR.Block.terminator callee_blk)))
           in
-          let () = insert_ops_after main_block call (casts @ callee_ops) in
+          let () = IR.Block.insert_ops_after main_block call (casts @ callee_ops) in
           (* replace call`s result with callee`s result *)
           let call_res = IR.Operation.result call 0 in
           let callee_res = IR.Operation.operand (IR.Block.terminator callee_blk) 0 in

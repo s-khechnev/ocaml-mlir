@@ -169,7 +169,7 @@ let lower_op_to_loops op blk body_builder =
   in
   IR.Value.replace_uses ~old:(IR.Operation.result op 0) ~fresh:alloc;
   let ops = build_loop_nest loc lower_bounds shape body_builder in
-  Inliner.insert_ops_after blk op ops
+  IR.Block.insert_ops_after blk op ops
 
 
 let lower_bin_op op blk =
@@ -277,7 +277,7 @@ let lower_const_op op blk =
       [ const_op; affine_store_op ] @ acc)
   in
   IR.Value.replace_uses ~old:(IR.Operation.result op 0) ~fresh:alloc;
-  Inliner.insert_ops_after blk op (Array.to_list const_indices @ ops)
+  IR.Block.insert_ops_after blk op (Array.to_list const_indices @ ops)
 
 
 let lower_return op blk =

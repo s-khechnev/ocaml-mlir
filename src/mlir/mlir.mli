@@ -468,6 +468,9 @@ module IR : sig
 
     (** Returns operations of the block. *)
     val ops : mlblock -> mlop list
+
+    (** Takes an operation owned by the caller and inserts operation after the (non-owned) reference operation in the given block. If the reference is null, prepends the operation. *)
+    val insert_ops_after : mlblock -> mlop -> mlop list -> unit
   end
 
   module Module : sig
