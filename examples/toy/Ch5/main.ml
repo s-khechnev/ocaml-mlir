@@ -10,23 +10,26 @@ let modul =
         ] )
   ; Function
       ( Prototype ("main", [])
-      , [ VarDecl
-            ( "a"
-            , [| 2; 3 |]
-            , Literal
-                ( [| 2; 3 |]
-                , [ Literal ([| 3 |], [ Num 1.0; Num 2.0; Num 3.0 ])
+      , [ (* VarDecl
+             ( "a"
+             , [| 2; 3 |]
+             , Literal
+             ( [| 2; 3 |]
+             , [ Literal ([| 3 |], [ Num 1.0; Num 2.0; Num 3.0 ])
                   ; Literal ([| 3 |], [ Num 4.0; Num 5.0; Num 6.0 ])
                   ] ) )
-        ; VarDecl
-            ( "b"
-            , [| 2; 3 |]
-            , Literal
-                ( [| 6 |]
-                , [ Literal
+             ; VarDecl
+             ( "b"
+             , [| 2; 3 |]
+             , Literal
+             ( [| 6 |]
+             , [ Literal
                       ([| 6 |], [ Num 1.0; Num 2.0; Num 3.0; Num 4.0; Num 5.0; Num 6.0 ])
                   ] ) )
-        ; VarDecl ("c", [||], Call ("multiply_transpose", [ Var "a"; Var "b" ]))
+             ; VarDecl ("c", [||], Call ("multiply_transpose", [ Var "a"; Var "b" ])) *)
+          VarDecl ("a", [||], Num 1.0)
+        ; VarDecl ("b", [||], Num 1.0)
+        ; VarDecl ("c", [||], BinOp ('+', Var "a", Var "b"))
         ; Print (Var "c")
         ; Return None
         ] )
