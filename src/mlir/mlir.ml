@@ -36,11 +36,11 @@ type mlexternal_pass_callbacks =
   ; run : mlop -> mlexternal_pass -> unit
   }
 
-module StringRef = Bindings.StringRef
+module StringRef = Bindings.Support.StringRef
 
 module IR = struct
   module Context = struct
-    include Bindings.Context
+    include Bindings.IR.Context
 
     let global_ctx = create ()
     let num_registered_dialects ctx = num_registered_dialects ctx |> Signed.Long.to_int
@@ -50,13 +50,13 @@ module IR = struct
   end
 
   module Dialect = struct
-    include Bindings.Dialect
+    include Bindings.IR.Dialect
 
     let namespace dialect = namespace dialect |> StringRef.to_string
   end
 
   module DialectHandle = struct
-    include Bindings.DialectHandle
+    include Bindings.IR.DialectHandle
 
     let get name =
       let str = Printf.sprintf "mlirGetDialectHandle__%s__" name in
@@ -67,10 +67,10 @@ module IR = struct
     let namespace dhandle = namespace dhandle |> StringRef.to_string
   end
 
-  module DialectRegistry = Bindings.DialectRegistry
+  module DialectRegistry = Bindings.IR.DialectRegistry
 
   module Type = struct
-    include Bindings.Type
+    include Bindings.IR.Type
 
     let parse ctx s =
       let s = StringRef.of_string s in
@@ -83,12 +83,12 @@ module IR = struct
   end
 
   module Location = struct
-    include Bindings.Location
+    include Bindings.IR.Location
 
     let file_line_col_get ctx s i j =
       file_line_col_get
         ctx
-        Bindings.StringRef.(of_string s)
+        StringRef.(of_string s)
         Unsigned.UInt.(of_int i)
         Unsigned.UInt.(of_int j)
 
@@ -101,7 +101,7 @@ module IR = struct
   end
 
   module Attribute = struct
-    include Bindings.Attribute
+    include Bindings.IR.Attribute
 
     let parse ctx s =
       let s = StringRef.of_string s in
@@ -117,7 +117,7 @@ module IR = struct
   end
 
   module OperationState = struct
-    include Bindings.OperationState
+    include Bindings.IR.OperationState
 
     let get s loc =
       let s = StringRef.of_string s in
@@ -153,21 +153,21 @@ module IR = struct
   end
 
   module Operation = struct
-    include Bindings.Operation
+    include Bindings.IR.Operation
 
     let create opstate =
       let opstate = addr opstate in
-      Bindings.Operation.create opstate
+      create opstate
 
 
-    let name op = name op |> Bindings.Identifier.to_string |> StringRef.to_string
-    let region x pos = Bindings.Operation.region x Intptr.(of_int pos)
+    let name op = name op |> Bindings.IR.Identifier.to_string |> StringRef.to_string
+    let region x pos = region x Intptr.(of_int pos)
     let num_regions reg = num_regions reg |> Intptr.to_int
     let num_operands op = num_operands op |> Intptr.to_int
-    let operand x pos = Bindings.Operation.operand x Intptr.(of_int pos)
+    let operand x pos = operand x Intptr.(of_int pos)
     let set_operand op pos value = set_operand op Intptr.(of_int pos) value
     let num_results op = num_results op |> Intptr.to_int
-    let result x pos = Bindings.Operation.result x Intptr.(of_int pos)
+    let result x pos = result x Intptr.(of_int pos)
     let num_attributes op = num_attributes op |> Intptr.to_int
     let attribute op pos = attribute op (Intptr.of_int pos)
     let attribute_by_name op name = attribute_by_name op (StringRef.of_string name)
@@ -180,13 +180,13 @@ module IR = struct
   end
 
   module OpOperand = struct
-    include Bindings.OpOperand
+    include Bindings.IR.OpOperand
 
     let operand_number oper = operand_number oper |> Unsigned.UInt.to_int
   end
 
   module Value = struct
-    include Bindings.Value
+    include Bindings.IR.Value
 
     let block_argument_arg_num x = block_argument_arg_num x |> Intptr.to_int
     let op_result_get_result_num x = op_result_get_result_num x |> Intptr.to_int
@@ -212,24 +212,24 @@ module IR = struct
   end
 
   module Block = struct
-    include Bindings.Block
+    include Bindings.IR.Block
 
     let create typs loc =
       let size = List.length typs |> Intptr.of_int in
       let typs = CArray.(start (of_list Typs.Type.t typs)) in
-      Bindings.Block.create size typs (Ctypes.allocate Typs.Location.t loc)
+      create size typs (Ctypes.allocate Typs.Location.t loc)
 
 
     let insert_owned_operation blk pos f =
       let pos = Intptr.of_int pos in
-      Bindings.Block.insert_owned_operation blk pos f
+      insert_owned_operation blk pos f
 
 
-    let num_arguments blk = Bindings.Block.num_arguments blk |> Intptr.to_int
+    let num_arguments blk = num_arguments blk |> Intptr.to_int
 
     let argument x pos =
       let pos = Intptr.of_int pos in
-      Bindings.Block.argument x pos
+      argument x pos
 
 
     let ops blk =
@@ -251,24 +251,24 @@ module IR = struct
   end
 
   module Module = struct
-    include Bindings.Module
+    include Bindings.IR.Module
 
     let parse ctx str = parse ctx StringRef.(of_string str)
   end
 
   module Region = struct
-    include Bindings.Region
+    include Bindings.IR.Region
   end
 
   module Identifier = struct
-    include Bindings.Identifier
+    include Bindings.IR.Identifier
 
     let get ctx str = get ctx (StringRef.of_string str)
     let to_string id = to_string id |> StringRef.to_string
   end
 
   module SymbolTable = struct
-    include Bindings.SymbolTable
+    include Bindings.IR.SymbolTable
 
     let symbol_attr_name () = symbol_attr_name () |> StringRef.to_string
     let visibility_attr_name () = visibility_attr_name () |> StringRef.to_string
@@ -279,12 +279,12 @@ module IR = struct
         (StringRef.of_string old_sym)
         (StringRef.of_string new_sym)
         from
-      |> Bindings.LogicalResult.is_success
+      |> Bindings.Support.LogicalResult.is_success
   end
 end
 
 module TypeIDAllocator = struct
-  include Bindings.TypeIDAllocator
+  include Bindings.Support.TypeIDAllocator
 end
 
 module AffineExpr = struct
@@ -372,15 +372,15 @@ module AffineMap = struct
 end
 
 module PassManager = struct
-  include Bindings.PassManager
+  include Bindings.Pass.PassManager
 
   let create_on_op ctx s = create_on_operaion ctx StringRef.(of_string s)
-  let run pass m = Bindings.LogicalResult.(is_success (run pass m))
+  let run pass m = Bindings.Support.LogicalResult.(is_success (run pass m))
   let nested_under pm s = nested_under pm StringRef.(of_string s)
 end
 
 module OpPassManager = struct
-  include Bindings.OpPassManager
+  include Bindings.Pass.OpPassManager
 
   let nested_under pm s = nested_under pm StringRef.(of_string s)
 
@@ -397,11 +397,11 @@ module OpPassManager = struct
   let parse_pass_pipeline pm s ~callback =
     let callback s _ = callback (StringRef.to_string s) in
     parse_pass_pipeline pm StringRef.(of_string s) callback null
-    |> Bindings.LogicalResult.is_success
+    |> Bindings.Support.LogicalResult.is_success
 end
 
 module ExternalPass = struct
-  include Bindings.ExternalPass
+  include Bindings.Pass.ExternalPass
 
   let empty_callbacks =
     { construct = (fun _ -> ())
@@ -421,8 +421,8 @@ module ExternalPass = struct
        | Some init ->
          setf s_callbacks ExternalPassCallbacks.initialize (fun ctx _ ->
            if init ctx ()
-           then Bindings.LogicalResult.success ()
-           else Bindings.LogicalResult.failure ())
+           then Bindings.Support.LogicalResult.success ()
+           else Bindings.Support.LogicalResult.failure ())
        | None -> ());
       setf s_callbacks ExternalPassCallbacks.clone (fun _ ->
         let _ = callbacks.clone () in

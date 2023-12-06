@@ -6,7 +6,7 @@
 (library
  (name stubs)
  (public_name mlir.stubs)
- (libraries mlir.stubs.types ctypes.stubs ctypes ctypes.foreign))
+ (libraries mlir.stubs.types mlir.stubs.dialect ctypes.stubs ctypes ctypes.foreign))
 
 (rule
  (targets types_bindings_generated.ml)

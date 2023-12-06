@@ -311,6 +311,10 @@ module IR : sig
         not owned. *)
     val block : mlop -> mlblock
 
+    (** Gets the operation that owns this operation, returning null if the operation
+        is not owned. *)
+    val parent : mlop -> mlop
+
     (** Returns the number of regions attached to the given operation. *)
     val num_regions : mlop -> int
 
