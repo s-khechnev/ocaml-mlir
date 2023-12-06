@@ -10,26 +10,23 @@ let modul =
         ] )
   ; Function
       ( Prototype ("main", [])
-      , [ (* VarDecl
-             ( "a"
-             , [| 2; 3 |]
-             , Literal
-             ( [| 2; 3 |]
-             , [ Literal ([| 3 |], [ Num 1.0; Num 2.0; Num 3.0 ])
+      , [ VarDecl
+            ( "a"
+            , [| 2; 3 |]
+            , Literal
+                ( [| 2; 3 |]
+                , [ Literal ([| 3 |], [ Num 1.0; Num 2.0; Num 3.0 ])
                   ; Literal ([| 3 |], [ Num 4.0; Num 5.0; Num 6.0 ])
                   ] ) )
-             ; VarDecl
-             ( "b"
-             , [| 2; 3 |]
-             , Literal
-             ( [| 6 |]
-             , [ Literal
+        ; VarDecl
+            ( "b"
+            , [| 2; 3 |]
+            , Literal
+                ( [| 6 |]
+                , [ Literal
                       ([| 6 |], [ Num 1.0; Num 2.0; Num 3.0; Num 4.0; Num 5.0; Num 6.0 ])
                   ] ) )
-             ; VarDecl ("c", [||], Call ("multiply_transpose", [ Var "a"; Var "b" ])) *)
-          VarDecl ("a", [||], Num 1.0)
-        ; VarDecl ("b", [||], Num 1.0)
-        ; VarDecl ("c", [||], BinOp ('+', Var "a", Var "b"))
+        ; VarDecl ("c", [||], Call ("multiply_transpose", [ Var "a"; Var "b" ]))
         ; Print (Var "c")
         ; Return None
         ] )
@@ -52,16 +49,21 @@ let () =
   let mlir_modul = Mlir_gen.mlirgen modul in
   let () = Inliner.inline_calls_in_main mlir_modul in
   let () =
+    (* pipeline: shape_inference, canonicalize, cse, lower,
+       canonicalize, cse, loop_fusion, affine_scalar_replacement *)
+    let () = RegisterEverything.passes () in
     let infer_pass = Shape_inference.infer_shapes_pass () in
-    let canon_pass = Transforms.Canonicalizer.create () in
-    let cse_pass = Transforms.CSE.create () in
     let lower_pass = Lower_to_affine.lower_to_affine_pass () in
     let pm = PassManager.create IR.Context.global_ctx in
-    let op_pm = PassManager.nested_under pm "toy.func" in
-    let () = OpPassManager.add_owned_pass op_pm infer_pass in
-    let () = OpPassManager.add_owned_pass op_pm canon_pass in
-    let () = OpPassManager.add_owned_pass op_pm cse_pass in
-    let () = OpPassManager.add_owned_pass op_pm lower_pass in
+    let toy_func_op_pm = PassManager.nested_under pm "toy.func" in
+    OpPassManager.add_owned_pass toy_func_op_pm infer_pass;
+    OpPassManager.add_pipeline toy_func_op_pm "canonicalize,cse" ~callback:print_endline;
+    OpPassManager.add_owned_pass (PassManager.to_op_pass_manager pm) lower_pass;
+    let func_op_pm = PassManager.nested_under pm "func.func" in
+    OpPassManager.add_pipeline
+      func_op_pm
+      "canonicalize,cse,affine-loop-fusion,affine-scalrep"
+      ~callback:print_endline;
     let _ = PassManager.run pm mlir_modul in
     ()
   in

@@ -374,6 +374,7 @@ end
 module PassManager = struct
   include Bindings.PassManager
 
+  let create_on_op ctx s = create_on_operaion ctx StringRef.(of_string s)
   let run pass m = Bindings.LogicalResult.(is_success (run pass m))
   let nested_under pm s = nested_under pm StringRef.(of_string s)
 end
@@ -386,6 +387,11 @@ module OpPassManager = struct
   let print_pass_pipeline ~callback x =
     let callback s _ = callback (StringRef.to_string s) in
     print_pass_pipeline x callback null
+
+
+  let add_pipeline pm s ~callback =
+    let callback s _ = callback (StringRef.to_string s) in
+    add_pipeline pm StringRef.(of_string s) callback null
 
 
   let parse_pass_pipeline pm s ~callback =

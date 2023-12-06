@@ -88,6 +88,16 @@ module Bindings (F : FOREIGN) = struct
         (Typs.OpPassManager.t @-> Typs.Pass.t @-> returning void)
 
 
+    let add_pipeline =
+      foreign
+        "mlirOpPassManagerAddPipeline"
+        (Typs.OpPassManager.t
+         @-> Typs.StringRef.t
+         @-> Typs.string_callback
+         @-> ptr void
+         @-> returning void)
+
+
     (* Print a textual MLIR pass pipeline by sending chunks of the string
        * representation and forwarding `userData to `callback`. Note that the callback
        * may be called several times with consecutive chunks of the string. *)

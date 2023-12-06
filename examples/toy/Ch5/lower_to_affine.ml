@@ -339,8 +339,10 @@ let lower_op op blk =
   | _ -> failwith "unknown op"
 
 
-let run main _ =
-  IR.Operation.dump (IR.Block.parent_op @@ IR.Operation.block main);
+let run modul_op _ =
+  let main =
+    IR.Block.first_operation @@ IR.Region.first_block @@ IR.Operation.region modul_op 0
+  in
   let main_blk = IR.Region.first_block (IR.Operation.region main 0) in
   let () =
     List.iter (IR.Block.ops main_blk) ~f:(fun op ->

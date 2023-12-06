@@ -1275,6 +1275,9 @@ module PassManager : sig
   (** Create a new top-level PassManager. *)
   val create : mlcontext -> mlpm
 
+  (** Create a new top-level PassManager anchored on `anchorOp`. *)
+  val create_on_op : mlcontext -> string -> mlpm
+
   (** Destroy the provided PassManager. *)
   val destroy : mlpm -> unit
 
@@ -1289,6 +1292,9 @@ module PassManager : sig
 
   (** Enable mlir-print-ir-after-all. *)
   val enable_ir_printing : mlpm -> unit
+
+  (** Enable / disable verify-each. *)
+  val enable_verifier : mlpm -> bool -> unit
 
   (** Nest an OpPassManager under the top-level PassManager, the nested passmanager will only run on operations matching the provided name. The returned OpPassManager will be destroyed when the parent is destroyed. To further nest more OpPassManager under the newly returned one, see `mlirOpPassManagerNest` below. *)
   val nested_under : mlpm -> string -> mlop_pm
@@ -1307,8 +1313,15 @@ module OpPassManager : sig
   (** Print a textual MLIR pass pipeline by sending chunks of the string representation and forwarding `userData to `callback`. Note that the callback may be called several times with consecutive chunks of the string. *)
   val print_pass_pipeline : callback:(string -> unit) -> mlop_pm -> unit
 
-  (** Parse a textual MLIR pass pipeline and add it to the provided OpPassManager. *)
-  (* val parse_pass_pipeline : mlop_pm -> string -> bool *)
+  (** Parse a sequence of textual MLIR pass pipeline elements and add them to the
+      provided OpPassManager. If parsing fails an error message is reported using
+      the provided callback. *)
+  val add_pipeline : mlop_pm -> string -> callback:(string -> unit) -> unit
+
+  (** Parse a textual MLIR pass pipeline and assign it to the provided
+      OpPassManager. If parsing fails an error message is reported using the
+      provided callback. *)
+  val parse_pass_pipeline : mlop_pm -> string -> callback:(string -> unit) -> bool
 end
 
 module ExternalPass : sig
