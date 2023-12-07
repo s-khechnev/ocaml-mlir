@@ -1,20 +1,5 @@
 open Ctypes
-
-module Make
-    (S : sig
-       val s : string
-     end)
-    (F : FOREIGN) =
-struct
-  open F
-
-  let create =
-    foreign Printf.(sprintf "mlirCreateTransforms%s" S.s) (void @-> returning Typs.Pass.t)
-
-
-  let register =
-    foreign Printf.(sprintf "mlirRegisterTransforms%s" S.s) (void @-> returning void)
-end
+open Utils
 
 module Bindings (F : FOREIGN) = struct
   open F
@@ -23,98 +8,98 @@ module Bindings (F : FOREIGN) = struct
   let register_passes = foreign "mlirRegisterTransformsPasses" (void @-> returning void)
 
   module CSE =
-    Make
+    MakeTransform
       (struct
         let s = "CSE"
       end)
       (F)
 
   module Canonicalizer =
-    Make
+    MakeTransform
       (struct
         let s = "Canonicalizer"
       end)
       (F)
 
   module ControlFlowSink =
-    Make
+    MakeTransform
       (struct
         let s = "ControlFlowSink"
       end)
       (F)
 
   module GenerateRuntimeVerification =
-    Make
+    MakeTransform
       (struct
         let s = "GenerateRuntimeVerification"
       end)
       (F)
 
   module Inliner =
-    Make
+    MakeTransform
       (struct
         let s = "Inliner"
       end)
       (F)
 
   module LocationSnapshot =
-    Make
+    MakeTransform
       (struct
         let s = "LocationSnapshot"
       end)
       (F)
 
   module LoopInvariantCodeMotion =
-    Make
+    MakeTransform
       (struct
         let s = "LoopInvariantCodeMotion"
       end)
       (F)
 
   module PrintOpStats =
-    Make
+    MakeTransform
       (struct
         let s = "PrintOpStats"
       end)
       (F)
 
   module SCCP =
-    Make
+    MakeTransform
       (struct
         let s = "SCCP"
       end)
       (F)
 
   module StripDebugInfo =
-    Make
+    MakeTransform
       (struct
         let s = "StripDebugInfo"
       end)
       (F)
 
   module SymbolDCE =
-    Make
+    MakeTransform
       (struct
         let s = "SymbolDCE"
       end)
       (F)
 
   module SymbolPrivatize =
-    Make
+    MakeTransform
       (struct
         let s = "SymbolPrivatize"
       end)
       (F)
 
   module TopologicalSort =
-    Make
+    MakeTransform
       (struct
         let s = "TopologicalSort"
       end)
       (F)
 
   module ViewOpGraph =
-    Make
+    MakeTransform
       (struct
         let s = "ViewOpGraph"
       end)
