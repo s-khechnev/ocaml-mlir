@@ -27,6 +27,7 @@ type mlsymboltbl = Typs.SymbolTable.t structured
 type mlop_operand = Typs.OpOperand.t structured
 type mltypeid_alloc = Typs.TypeIDAllocator.t structured
 type mlexternal_pass = Typs.ExternalPass.t structured
+type mlexec_engine = Typs.ExecutionEngine.t structured
 
 type mlexternal_pass_callbacks =
   { construct : unit -> unit
@@ -788,6 +789,25 @@ module Dialect = struct
       let typs = CArray.(start (of_list Typs.Type.t typs)) in
       literal_struct ctx n typs is_packed
   end
+end
+
+module ExecutionEngine = struct
+  include Bindings.ExecutionEngine
+
+  let create modul opt_lvl paths enable_obj_dump =
+    let n = List.length paths in
+    let paths =
+      CArray.(start (of_list Typs.StringRef.t (List.map StringRef.of_string paths)))
+    in
+    create modul opt_lvl n paths enable_obj_dump
+
+
+  let invoke_packed jit name =
+    invoke_packed jit StringRef.(of_string name) null
+    |> Bindings.Support.LogicalResult.is_success
+
+
+  let dump_to_obj_file jit filename = dump_to_obj_file jit StringRef.(of_string filename)
 end
 
 let with_context f =

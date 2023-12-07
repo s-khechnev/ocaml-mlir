@@ -16,6 +16,7 @@ let () =
       ; "-lMLIRCAPIRegisterEverything"
       ; "-lMLIRCAPITransforms"
       ; "-lMLIRCAPIConversion"
+      ; "-lMLIRCAPIExecutionEngine"
       ; "-lMLIRCAPILLVM"
       ; "-lLLVM"
       ; "-lMLIR"

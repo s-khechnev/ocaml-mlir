@@ -82,6 +82,8 @@ type mlexternal_pass_callbacks =
   ; run : mlop -> mlexternal_pass -> unit
   }
 
+type mlexec_engine
+
 module IR : sig
   module Context : sig
     val global_ctx : mlcontext
@@ -1462,6 +1464,35 @@ module Dialect : sig
     (** Creates an LLVM literal (unnamed) struct type. *)
     val literal_struct : mlcontext -> mltype list -> bool -> mltype
   end
+end
+
+module ExecutionEngine : sig
+  (** Creates an ExecutionEngine for the provided ModuleOp. The ModuleOp is
+      expected to be "translatable" to LLVM IR (only contains operations in
+      dialects that implement the `LLVMTranslationDialectInterface`). The module
+      ownership stays with the client and can be destroyed as soon as the call
+      returns. `optLevel` is the optimization level to be used for transformation
+      and code generation. LLVM passes at `optLevel` are run before code
+      generation. The number and array of paths corresponding to shared libraries
+      that will be loaded are specified via `numPaths` and `sharedLibPaths`
+      respectively. *)
+  val create : mlmodule -> int -> string list -> bool -> mlexec_engine
+
+  (** Destroy an ExecutionEngine instance. *)
+  val destroy : mlexec_engine -> unit
+
+  (** Checks whether an execution engine is null. *)
+  val is_null : mlexec_engine -> bool
+
+  (** Invoke a native function in the execution engine by name with the arguments
+      and result of the invoked function passed as an array of pointers. The
+      function must have been tagged with the `llvm.emit_c_interface` attribute.
+      Returns a failure if the execution fails for any reason (the function name
+      can't be resolved for instance). *)
+  val invoke_packed : mlexec_engine -> string -> bool
+
+  (** Dump as an object in `fileName`. *)
+  val dump_to_obj_file : mlexec_engine -> string -> unit
 end
 
 (** [with_context f]  creates a context [ctx], applies [f] to it, destroys it and returns the result of applying [f] *)

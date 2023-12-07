@@ -271,4 +271,13 @@ module Bindings (S : Cstubs.Types.TYPE) = struct
         [ Error, error; Warning, warning; Note, note; Remark, remark ]
         ~unexpected:(fun _ -> failwith "unexpected Diagnostic enum")
   end
+
+  (* ExecutionEngine.h Types *)
+  module ExecutionEngine = struct
+    type t
+
+    let t : t structure typ = structure "MlirExecutionEngine"
+    let ptr = field t "ptr" (ptr void)
+    let () = seal t
+  end
 end

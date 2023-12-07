@@ -18,6 +18,7 @@ let () =
     Format.fprintf fmt_c "#include \"mlir-c/Transforms.h\"@.";
     Format.fprintf fmt_c "#include \"mlir-c/Conversion.h\"@.";
     Format.fprintf fmt_c "#include \"mlir-c/Dialect/LLVM.h\"@.";
+    Format.fprintf fmt_c "#include \"mlir-c/ExecutionEngine.h\"@.";
     Cstubs.write_c fmt_c ~prefix:"caml" (module Stubs.Bindings));
   with_file "mlir_generated.ml" ~f:(fun fmt_ml ->
     Cstubs.write_ml fmt_ml ~prefix:"caml" (module Stubs.Bindings));

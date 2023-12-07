@@ -17,4 +17,5 @@ module Bindings (F : FOREIGN) = struct
   module Transforms = Transforms.Bindings (F)
   module Conversion = Conversion.Bindings (F)
   module Support = Support.Bindings (F)
+  module ExecutionEngine = Execution_engine.Bindings (F)
 end
