@@ -297,7 +297,13 @@ let lower_func op =
     let attrs =
       List.init (IR.Operation.num_attributes op) ~f:(fun n -> IR.Operation.attribute op n)
     in
-    IR.OperationState.add_named_attributes func_op_st attrs;
+    (* for jit *)
+    let emit_c_interface_attr =
+      IR.Attribute.name
+        (IR.Identifier.get IR.Context.global_ctx "llvm.emit_c_interface")
+        (BuiltinAttributes.Unit.get IR.Context.global_ctx)
+    in
+    IR.OperationState.add_named_attributes func_op_st (emit_c_interface_attr :: attrs);
     let reg = IR.Region.create () in
     let main_blk = IR.Region.first_block (IR.Operation.region op 0) in
     IR.Region.append_owned_block reg main_blk;

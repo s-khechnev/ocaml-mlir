@@ -69,4 +69,7 @@ let () =
     let _ = PassManager.run pm mlir_modul in
     ()
   in
-  IR.Operation.dump @@ IR.Module.operation mlir_modul
+  RegisterEverything.llvm_translations IR.Context.global_ctx;
+  let jit = ExecutionEngine.create mlir_modul 0 [] false in
+  let _ = ExecutionEngine.invoke_packed jit "main" in
+  ()
