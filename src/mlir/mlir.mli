@@ -41,7 +41,7 @@ type mlattr
 type mlnamed_attr
 
 (** MLIR Pass *)
-type mlpass
+type mlpass = Stubs.Typs.Pass.t Ctypes.structure
 
 (** MLIR Pass Manager *)
 type mlpm
@@ -1276,6 +1276,8 @@ module TypeIDAllocator : sig
 end
 
 module PassManager : sig
+  val get : string -> mlpass
+
   (** Create a new top-level PassManager. *)
   val create : mlcontext -> mlpm
 
@@ -1353,20 +1355,81 @@ end
 module Transforms : sig
   val register_passes : unit -> unit
 
-  module CSE : Transforms_intf.Sig with type t := mlpass
-  module Canonicalizer : Transforms_intf.Sig with type t := mlpass
-  module ControlFlowSink : Transforms_intf.Sig with type t := mlpass
-  module GenerateRuntimeVerification : Transforms_intf.Sig with type t := mlpass
-  module Inliner : Transforms_intf.Sig with type t := mlpass
-  module LocationSnapshot : Transforms_intf.Sig with type t := mlpass
-  module LoopInvariantCodeMotion : Transforms_intf.Sig with type t := mlpass
-  module PrintOpStats : Transforms_intf.Sig with type t := mlpass
-  module SCCP : Transforms_intf.Sig with type t := mlpass
-  module StripDebugInfo : Transforms_intf.Sig with type t := mlpass
-  module SymbolDCE : Transforms_intf.Sig with type t := mlpass
-  module SymbolPrivatize : Transforms_intf.Sig with type t := mlpass
-  module TopologicalSort : Transforms_intf.Sig with type t := mlpass
-  module ViewOpGraph : Transforms_intf.Sig with type t := mlpass
+  module CSE : Helper.Sig with type t := mlpass
+  module Canonicalizer : Helper.Sig with type t := mlpass
+  module ControlFlowSink : Helper.Sig with type t := mlpass
+  module GenerateRuntimeVerification : Helper.Sig with type t := mlpass
+  module Inliner : Helper.Sig with type t := mlpass
+  module LocationSnapshot : Helper.Sig with type t := mlpass
+  module LoopInvariantCodeMotion : Helper.Sig with type t := mlpass
+  module PrintOpStats : Helper.Sig with type t := mlpass
+  module SCCP : Helper.Sig with type t := mlpass
+  module StripDebugInfo : Helper.Sig with type t := mlpass
+  module SymbolDCE : Helper.Sig with type t := mlpass
+  module SymbolPrivatize : Helper.Sig with type t := mlpass
+  module TopologicalSort : Helper.Sig with type t := mlpass
+  module ViewOpGraph : Helper.Sig with type t := mlpass
+end
+
+module Conversion : sig
+  val register_passes : unit -> unit
+
+  module ArithToLLVM : Helper.Sig with type t := mlpass
+  module AMDGPUToROCDL : Helper.Sig with type t := mlpass
+  module AffineForToGPU : Helper.Sig with type t := mlpass
+  module AffineToStandard : Helper.Sig with type t := mlpass
+  module ArithToSPIRV : Helper.Sig with type t := mlpass
+  module ArmNeon2dToIntr : Helper.Sig with type t := mlpass
+  module AsyncToLLVM : Helper.Sig with type t := mlpass
+  module BufferizationToMemRef : Helper.Sig with type t := mlpass
+  module ComplexToLLVM : Helper.Sig with type t := mlpass
+  module ComplexToLibm : Helper.Sig with type t := mlpass
+  module ComplexToStandard : Helper.Sig with type t := mlpass
+  module ControlFlowToLLVM : Helper.Sig with type t := mlpass
+  module ControlFlowToSPIRV : Helper.Sig with type t := mlpass
+  module FuncToLLVM : Helper.Sig with type t := mlpass
+  module FuncToSPIRV : Helper.Sig with type t := mlpass
+  module GPUToSPIRV : Helper.Sig with type t := mlpass
+  module GpuLaunchFuncToVulkanLaunchFunc : Helper.Sig with type t := mlpass
+  module GpuOpsToNVVMOps : Helper.Sig with type t := mlpass
+  module GpuOpsToROCDLOps : Helper.Sig with type t := mlpass
+  module IndexToLLVMPass : Helper.Sig with type t := mlpass
+  module LinalgToLLVM : Helper.Sig with type t := mlpass
+  module LinalgToStandard : Helper.Sig with type t := mlpass
+  module MathToFuncs : Helper.Sig with type t := mlpass
+  module MathToLLVM : Helper.Sig with type t := mlpass
+  module MathToLibm : Helper.Sig with type t := mlpass
+  module MathToSPIRV : Helper.Sig with type t := mlpass
+  module MemRefToSPIRV : Helper.Sig with type t := mlpass
+  module NVGPUToNVVM : Helper.Sig with type t := mlpass
+  module OpenACCToLLVM : Helper.Sig with type t := mlpass
+  module OpenACCToSCF : Helper.Sig with type t := mlpass
+  module OpenMPToLLVM : Helper.Sig with type t := mlpass
+  module PDLToPDLInterp : Helper.Sig with type t := mlpass
+  module ParallelLoopToGpu : Helper.Sig with type t := mlpass
+  module SCFToOpenMP : Helper.Sig with type t := mlpass
+  module SPIRVToLLVM : Helper.Sig with type t := mlpass
+  module ShapeConstraints : Helper.Sig with type t := mlpass
+  module ShapeToStandard : Helper.Sig with type t := mlpass
+  module TensorToLinalg : Helper.Sig with type t := mlpass
+  module TensorToSPIRV : Helper.Sig with type t := mlpass
+  module VectorToGPU : Helper.Sig with type t := mlpass
+  module VectorToLLVM : Helper.Sig with type t := mlpass
+  module VectorToSCF : Helper.Sig with type t := mlpass
+  module VectorToSPIRV : Helper.Sig with type t := mlpass
+  module VulkanLaunchFuncToVulkanCalls : Helper.Sig with type t := mlpass
+  module GpuToLLVMConversionPass : Helper.Sig with type t := mlpass
+  module LowerHostCodeToLLVM : Helper.Sig with type t := mlpass
+  module MapMemRefStorageClass : Helper.Sig with type t := mlpass
+  module MemRefToLLVMConversionPass : Helper.Sig with type t := mlpass
+  module ReconcileUnrealizedCasts : Helper.Sig with type t := mlpass
+  module SCFToControlFlow : Helper.Sig with type t := mlpass
+  module SCFToSPIRV : Helper.Sig with type t := mlpass
+  module TosaToArith : Helper.Sig with type t := mlpass
+  module TosaToLinalg : Helper.Sig with type t := mlpass
+  module TosaToLinalgNamed : Helper.Sig with type t := mlpass
+  module TosaToSCF : Helper.Sig with type t := mlpass
+  module TosaToTensor : Helper.Sig with type t := mlpass
 end
 
 module RegisterEverything : sig

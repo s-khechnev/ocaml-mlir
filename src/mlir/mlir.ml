@@ -374,6 +374,11 @@ end
 module PassManager = struct
   include Bindings.Pass.PassManager
 
+  let get name =
+    let open Ctypes in
+    Foreign.foreign name (void @-> returning Stubs.Typs.Pass.t) ()
+
+
   let create_on_op ctx s = create_on_operaion ctx StringRef.(of_string s)
   let run pass m = Bindings.Support.LogicalResult.(is_success (run pass m))
   let nested_under pm s = nested_under pm StringRef.(of_string s)
@@ -761,6 +766,7 @@ module BuiltinAttributes = struct
 end
 
 module Transforms = Bindings.Transforms
+module Conversion = Bindings.Conversion
 module RegisterEverything = Bindings.RegisterEverything
 
 module Dialect = struct

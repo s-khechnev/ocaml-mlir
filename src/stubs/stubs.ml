@@ -15,5 +15,6 @@ module Bindings (F : FOREIGN) = struct
   module BuiltinAttributes = Builtin_attributes.Bindings (F)
   module BuiltinTypes = Builtin_types.Bindings (F)
   module Transforms = Transforms.Bindings (F)
+  module Conversion = Conversion.Bindings (F)
   module Support = Support.Bindings (F)
 end
