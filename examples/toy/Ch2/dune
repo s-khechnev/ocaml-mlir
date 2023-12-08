@@ -1,14 +1,7 @@
 (executable
  (public_name toy-ch2)
  (name main)
- (libraries
-  base
-  mlir
-  mlir.toy.parser2
-  ctypes
-  ctypes.foreign
-  mlir.stubs
-  mlir.stubs.types)
+ (libraries base mlir mlir.toy.parser2)
  (modules main mlir_gen)
  (flags
   (:standard -cclib %{read:toy_flags})))
@@ -19,8 +12,6 @@
  (action
   (bash
    "echo \"-Wl,-rpath,`llvm-config-16 --libdir` -Wl,-rpath,`pwd` -L`pwd` -lMLIRToy -lToyCAPI \" > toy_flags")))
-
-(data_only_dirs dialect)
 
 (rule
  (deps

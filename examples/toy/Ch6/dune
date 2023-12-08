@@ -1,14 +1,7 @@
 (executable
  (public_name toy-ch6)
  (name main)
- (libraries
-  base
-  mlir
-  mlir.toy.parser6
-  ctypes
-  ctypes.foreign
-  mlir.stubs
-  mlir.stubs.types)
+ (libraries base mlir mlir.toy.parser6)
  (modules main mlir_gen inliner shape_inference lower_to_affine)
  (flags
   (:standard -cclib %{read:toy_flags})))
@@ -19,8 +12,6 @@
  (action
   (bash
    "echo \"-Wl,-rpath,`llvm-config-16 --libdir` -Wl,-rpath,`pwd` -L`pwd` -lMLIRToy -lToyCAPI \" > toy_flags")))
-
-(data_only_dirs dialect)
 
 (rule
  (deps
