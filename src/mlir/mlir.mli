@@ -261,7 +261,7 @@ module IR : sig
     val dump : mlattr -> unit
 
     (** Associates an attribute with the name. Takes ownership of neither. *)
-    val name : mlident -> mlattr -> mlnamed_attr
+    val name : string -> mlattr -> mlnamed_attr
   end
 
   module OperationState : sig

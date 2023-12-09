@@ -16,14 +16,10 @@ let mlirgen_proto name args =
   let inputs = List.init (List.length args) ~f:(fun _ -> typ [||]) in
   let func_typ_named_attr =
     let func_typ = BuiltinTypes.Function.get IR.Context.global_ctx ~inputs ~results:[] in
-    IR.Attribute.name
-      (IR.Identifier.get IR.Context.global_ctx "function_type")
-      (BuiltinAttributes.Type.get func_typ)
+    IR.Attribute.name "function_type" (BuiltinAttributes.Type.get func_typ)
   in
   let func_name_named_attr =
-    IR.Attribute.name
-      (IR.Identifier.get IR.Context.global_ctx "sym_name")
-      (BuiltinAttributes.String.get IR.Context.global_ctx name)
+    IR.Attribute.name "sym_name" (BuiltinAttributes.String.get IR.Context.global_ctx name)
   in
   let func_op_state = IR.OperationState.get "toy.func" loc in
   let () =
@@ -46,9 +42,7 @@ let rec mlirgen_expr block =
       | _ -> typ shp
     in
     let attr = BuiltinAttributes.Dense.Elements.double_get typ values in
-    let named_attr =
-      IR.Attribute.name (IR.Identifier.get IR.Context.global_ctx "value") attr
-    in
+    let named_attr = IR.Attribute.name "value" attr in
     let const_op_state =
       IR.OperationState.get "toy.constant" (IR.Location.unknown IR.Context.global_ctx)
     in
@@ -142,7 +136,7 @@ let rec mlirgen_expr block =
        in
        let callee_named_attr =
          IR.Attribute.name
-           (IR.Identifier.get IR.Context.global_ctx "callee")
+           "callee"
            (BuiltinAttributes.FlatSymbolRef.get IR.Context.global_ctx f_name)
        in
        let () = IR.OperationState.add_named_attributes op_state [ callee_named_attr ] in

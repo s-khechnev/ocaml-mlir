@@ -114,7 +114,9 @@ module IR = struct
       print x callback null
 
 
-    let name id attr = name id attr
+    let name nm attr =
+      let id = Bindings.IR.Identifier.get (context attr) (StringRef.of_string nm) in
+      name id attr
   end
 
   module OperationState = struct

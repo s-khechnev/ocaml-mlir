@@ -19,7 +19,7 @@ let alloc_dealloc typ loc blk =
       IR.OperationState.add_named_attributes
         alloc_st
         [ IR.Attribute.name
-            (IR.Identifier.get IR.Context.global_ctx "operand_segment_sizes")
+            "operand_segment_sizes"
             (BuiltinAttributes.Dense.Array.i32 IR.Context.global_ctx [ 0; 0 ])
         ]
     in
@@ -53,10 +53,7 @@ let affine_store_op loc value_to_store memref indices =
   IR.OperationState.add_operands affine_store_op_st ([ value_to_store; memref ] @ indices);
   IR.OperationState.add_named_attributes
     affine_store_op_st
-    [ IR.Attribute.name
-        (IR.Identifier.get IR.Context.global_ctx "map")
-        (BuiltinAttributes.AffineMap.get map)
-    ];
+    [ IR.Attribute.name "map" (BuiltinAttributes.AffineMap.get map) ];
   IR.Operation.create affine_store_op_st
 
 
@@ -66,10 +63,7 @@ let affine_load_op loc ivs alloc =
   let map = map mref_typ in
   IR.OperationState.add_named_attributes
     affine_load_op_st
-    [ IR.Attribute.name
-        (IR.Identifier.get IR.Context.global_ctx "map")
-        (BuiltinAttributes.AffineMap.get map)
-    ];
+    [ IR.Attribute.name "map" (BuiltinAttributes.AffineMap.get map) ];
   IR.OperationState.add_operands affine_load_op_st [ alloc ];
   IR.OperationState.add_operands affine_load_op_st ivs;
   IR.OperationState.add_results
@@ -86,13 +80,9 @@ let build_loop_from_consts loc lb ub body_builder =
     let step =
       BuiltinAttributes.Integer.get (BuiltinTypes.Index.get IR.Context.global_ctx) 1
     in
-    IR.Attribute.name (IR.Identifier.get IR.Context.global_ctx "step") step
+    IR.Attribute.name "step" step
   in
-  let bound_attr name v =
-    IR.Attribute.name
-      (IR.Identifier.get IR.Context.global_ctx name)
-      (BuiltinAttributes.AffineMap.get v)
-  in
+  let bound_attr name v = IR.Attribute.name name (BuiltinAttributes.AffineMap.get v) in
   let () =
     IR.OperationState.add_named_attributes
       for_op_st
@@ -217,9 +207,7 @@ let lower_const_op op blk =
       BuiltinAttributes.Integer.get (BuiltinTypes.Index.get IR.Context.global_ctx) idx
     in
     let () =
-      IR.OperationState.add_named_attributes
-        const_id_st
-        [ IR.Attribute.name (IR.Identifier.get IR.Context.global_ctx "value") idx ]
+      IR.OperationState.add_named_attributes const_id_st [ IR.Attribute.name "value" idx ]
     in
     let () =
       IR.OperationState.add_results
@@ -260,7 +248,7 @@ let lower_const_op op blk =
         in
         IR.OperationState.add_named_attributes
           const_op_st
-          [ IR.Attribute.name (IR.Identifier.get IR.Context.global_ctx "value") value ];
+          [ IR.Attribute.name "value" value ];
         IR.OperationState.add_results
           const_op_st
           [ BuiltinTypes.Float.f64 IR.Context.global_ctx ];
