@@ -1,0 +1,26 @@
+(executable
+ (public_name rgn)
+ (name main)
+ (libraries base mlir)
+ (modules main)
+ (flags
+  (:standard -cclib %{read:rgn_flags})))
+
+(rule
+ (targets rgn_flags)
+ (deps libRgnCAPI.so libMLIRRgn.so)
+ (action
+  (bash
+   "echo \"-Wl,-rpath,`llvm-config-16 --libdir` -lMLIR -Wl,-rpath,`pwd` -L`pwd` -lMLIRRgn -lRgnCAPI \" > rgn_flags")))
+
+(rule
+ (deps
+  (source_tree dialect)
+  Makefile)
+ (targets libRgnCAPI.so libMLIRRgn.so)
+ (action
+  (no-infer
+   (progn
+    (run make capi_rgn)
+    (copy build/libRgnCAPI.so libRgnCAPI.so)
+    (copy build/libMLIRRgn.so libMLIRRgn.so)))))
