@@ -39,7 +39,7 @@ let () =
   let val_op const =
     let val_op_st = IR.OperationState.get "rgn.val" dummy_loc in
     let rgn = IR.Region.create () in
-    let blk = IR.Block.create [] dummy_loc in
+    let blk = IR.Block.create [] [ dummy_loc ] in
     IR.Region.append_owned_block rgn blk;
     let const_op = const_op i32 const in
     IR.Block.append_owned_operation blk const_op;

@@ -217,10 +217,12 @@ module IR = struct
   module Block = struct
     include Bindings.IR.Block
 
-    let create typs loc =
+    let create typs locs =
       let size = List.length typs |> Intptr.of_int in
-      let typs = CArray.(start (of_list Typs.Type.t typs)) in
-      create size typs (Ctypes.allocate Typs.Location.t loc)
+      let f t xs = CArray.(start (of_list t xs)) in
+      let typs = f Typs.Type.t typs in
+      let locs = f Typs.Location.t locs in
+      create size typs locs
 
 
     let insert_owned_operation blk pos f =

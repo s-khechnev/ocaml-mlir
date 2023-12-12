@@ -430,7 +430,7 @@ module IR : sig
 
   module Block : sig
     (** Creates a new empty block with the given argument types and transfers ownership to the caller. *)
-    val create : mltype list -> mllocation -> mlblock
+    val create : mltype list -> mllocation list -> mlblock
 
     (** Takes a block owned by the caller and destroys it. *)
     val destroy : mlblock -> unit

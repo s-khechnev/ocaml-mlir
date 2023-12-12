@@ -28,7 +28,7 @@ let mlirgen_proto name args =
       [ func_name_named_attr; func_typ_named_attr ]
   in
   let region = IR.Region.create () in
-  let entry_block = IR.Block.create inputs loc in
+  let entry_block = IR.Block.create inputs [ loc ] in
   let () = IR.Region.append_owned_block region entry_block in
   let () = IR.OperationState.add_owned_regions func_op_state [ region ] in
   IR.Operation.create func_op_state

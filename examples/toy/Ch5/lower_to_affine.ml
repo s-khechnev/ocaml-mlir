@@ -90,7 +90,7 @@ let build_loop_from_consts loc lb ub body_builder =
   in
   let region = IR.Region.create () in
   let entry_block =
-    IR.Block.create [ BuiltinTypes.Index.get IR.Context.global_ctx ] loc
+    IR.Block.create [ BuiltinTypes.Index.get IR.Context.global_ctx ] [ loc ]
   in
   let () = IR.Region.append_owned_block region entry_block in
   let () = IR.OperationState.add_owned_regions for_op_st [ region ] in
@@ -105,7 +105,7 @@ let build_loop_nest loc lower_bounds upper_bounds body_builder =
   let count = Array.length lower_bounds in
   if count = 0
   then (
-    let dummy_blk = IR.Block.create [] loc in
+    let dummy_blk = IR.Block.create [] [ loc ] in
     body_builder dummy_blk loc [];
     IR.Block.ops dummy_blk)
   else (
