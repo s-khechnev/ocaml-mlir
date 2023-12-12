@@ -52,6 +52,7 @@ jobs:
       - name: Send coverage report to Coveralls
         if: github.event_name != 'pull_request'
         run: |
+          git config --global --add safe.directory /__w/ocaml-mlir/ocaml-mlir
           opam exec -- make coverage
           opam exec -- bisect-ppx-report send-to Coveralls --coverage-path $BISECT_DIR
         env:
