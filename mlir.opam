@@ -2,7 +2,7 @@
 opam-version: "2.0"
 synopsis: "Bindings to LLVM MLIR"
 description: "OCaml bindings to LLVM MLIR"
-authors: ["Ta-Chu Kao" "s-khechnev"]
+authors: ["Ta-Chu Kao"]
 license: "MIT"
 homepage: "https://github.com/s-khechnev/ocaml-mlir"
 bug-reports: "https://github.com/s-khechnev/ocaml-mlir/issues"

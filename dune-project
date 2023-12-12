@@ -7,7 +7,7 @@
 
 (license MIT)
 
-(authors "Ta-Chu Kao" "s-khechnev")
+(authors "Ta-Chu Kao")
 
 (name mlir)
 
