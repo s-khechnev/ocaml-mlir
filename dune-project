@@ -23,6 +23,7 @@
   stdune
   ppx_inline_test
   ppx_expect
+  bisect_ppx
   (base :with-test)
   (ocamlformat
    (>= 0.23.0))))
