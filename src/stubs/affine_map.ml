@@ -34,9 +34,8 @@ module Bindings (F : FOREIGN) = struct
     foreign "mlirAffineMapEmptyGet" (Typs.Context.t @-> returning Typs.AffineMap.t)
 
 
-  (*  Creates a zero result affine map of the given dimensions and symbols in the
-      context. The affine map is owned by the context.
-  *)
+  (* Creates a zero result affine map of the given dimensions and symbols in the
+     context. The affine map is owned by the context. *)
   let zero_result =
     foreign
       "mlirAffineMapZeroResultGet"
@@ -134,7 +133,9 @@ module Bindings (F : FOREIGN) = struct
 
   (* Returns the result at the given position. *)
   let result =
-    foreign "mlirAffineMapGetResult" (Typs.AffineMap.t @-> intptr_t @-> returning Typs.AffineExpr.t)
+    foreign
+      "mlirAffineMapGetResult"
+      (Typs.AffineMap.t @-> intptr_t @-> returning Typs.AffineExpr.t)
 
 
   (* Returns the number of inputs (dimensions + symbols) of the given affine

@@ -1,4 +1,4 @@
-(* Recreating CAPI test: pass.c *)
+(* Recreating CAPI test: pass.c
 open Mlir
 open IR
 
@@ -108,4 +108,4 @@ let%expect_test _ =
       Top-level: module(func(print-op-stats))
       Nested Module: func(print-op-stats)
       Nested Module>Func: print-op-stats
-      |}]
+      |}] *)

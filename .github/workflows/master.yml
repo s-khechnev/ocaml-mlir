@@ -42,6 +42,9 @@ jobs:
             opam install . --deps-only --with-test --with-doc
 
       - name: Building
-        run: opam exec -- dune build --profile=release
-
-      - run: opam exec -- dune build @install --profile=release
+        run: |
+            opam exec -- dune build --profile=release
+            opam exec -- dune build @install --profile=release
+      
+      - name: Runing tests
+        run: opam exec -- dune runtest

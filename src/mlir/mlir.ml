@@ -340,6 +340,10 @@ module AffineMap = struct
       (Ctypes.allocate Typs.AffineExpr.t expr)
 
 
+  let zero_result ctx dim_count sym_count =
+    zero_result ctx Intptr.(of_int dim_count) Intptr.(of_int sym_count)
+
+
   let constant ctx i = constant ctx Int64.(of_int i)
 
   let permutation ctx perm =

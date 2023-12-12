@@ -678,6 +678,10 @@ module AffineMap : sig
   (** Creates a zero result affine map with no dimensions or symbols in the context. The affine map is owned by the context. *)
   val empty : mlcontext -> mlaffine_map
 
+  (** Creates a zero result affine map of the given dimensions and symbols in the
+      context. The affine map is owned by the context. *)
+  val zero_result : mlcontext -> int -> int -> mlaffine_map
+
   (** Creates a zero result affine map of the given dimensions and symbols in the context. The affine map is owned by the context. *)
   val get : mlcontext -> int -> int -> int -> mlaffine_expr -> mlaffine_map
 
