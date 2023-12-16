@@ -1,4 +1,4 @@
-open Parser6.Ast
+open Parser.Ast
 
 let modul =
   [ Function
