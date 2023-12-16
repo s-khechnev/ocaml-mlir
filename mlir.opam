@@ -7,7 +7,7 @@ license: "MIT"
 homepage: "https://github.com/s-khechnev/ocaml-mlir"
 bug-reports: "https://github.com/s-khechnev/ocaml-mlir/issues"
 depends: [
-  "dune" {>= "2.7"}
+  "dune" {>= "3.10"}
   "ocaml" {>= "4.14"}
   "ctypes"
   "ctypes-foreign"
