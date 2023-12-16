@@ -14,7 +14,7 @@ llvm-16-dev llvm-16-tools libmlir-16-dev mlir-16-tools
 
 2. Current dependencies
 ```
-opam install ctypes ctypes-foreign base stdune ppx_expect ppx_inline_test bisect_ppx
+opam install ctypes ctypes-foreign angstrom base stdune ppx_deriving ppx_expect ppx_inline_test bisect_ppx
 ```
 
 3. Build the OCaml bindings
