@@ -21,8 +21,10 @@
   ctypes
   ctypes-foreign
   stdune
+  angstrom
   ppx_inline_test
   ppx_expect
+  ppx_deriving
   bisect_ppx
   (base :with-test)
   (ocamlformat

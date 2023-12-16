@@ -1,3 +1,7 @@
 (library
- (name parser)
- (public_name mlir.toy.parser))
+ (name parse)
+ (public_name mlir.toy.parser)
+ (modules ast parser)
+ (libraries angstrom base)
+ (preprocess
+  (pps ppx_deriving.show)))

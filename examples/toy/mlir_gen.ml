@@ -1,6 +1,6 @@
 open Mlir
 open Base
-open Parser
+open Parse
 
 let symbolTable = Hashtbl.create (module String)
 let f64 = BuiltinTypes.Float.f64 IR.Context.global_ctx

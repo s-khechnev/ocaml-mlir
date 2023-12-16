@@ -180,7 +180,7 @@ let lower_bin_op op blk =
       in
       match IR.Operation.name op with
       | "toy.add" -> bin_op "arith.addf"
-      | "toy.mul" -> bin_op "arith.msulf"
+      | "toy.mul" -> bin_op "arith.mulf"
       | _ -> assert false
     in
     IR.Block.append_owned_operation blk loaded_lhs;

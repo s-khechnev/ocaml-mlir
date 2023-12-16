@@ -1,5 +1,5 @@
-type shape = int array
-type var = string
+type shape = int array [@@deriving show]
+type var = string [@@deriving show]
 
 type expr =
   | Num of float
@@ -10,7 +10,8 @@ type expr =
   | BinOp of char * expr * expr
   | Call of string * expr list
   | Print of expr
+[@@deriving show]
 
-type proto = Prototype of string * var list
-type func = Function of proto * expr list
-type modul = func list
+type proto = Prototype of string * var list [@@deriving show]
+type func = Function of proto * expr list [@@deriving show]
+type modul = func list [@@deriving show]

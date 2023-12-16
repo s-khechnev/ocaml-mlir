@@ -1,7 +1,7 @@
 (executable
  (public_name toy)
  (name main)
- (libraries base mlir mlir.toy.parser)
+ (libraries base mlir parse)
  (modules main mlir_gen inliner shape_inference lower_to_affine)
  (flags
   (:standard -cclib %{read:toy_flags})))
