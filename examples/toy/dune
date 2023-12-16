@@ -4,7 +4,9 @@
  (libraries base mlir parse)
  (modules main mlir_gen inliner shape_inference lower_to_affine)
  (flags
-  (:standard -cclib %{read:toy_flags})))
+  (:standard -cclib %{read:toy_flags}))
+ (instrumentation
+  (backend bisect_ppx)))
 
 (rule
  (targets toy_flags)
