@@ -279,6 +279,9 @@ module IR : sig
 
     (** Adds a list of operands to the operation state. *)
     val add_operands : mlop_state -> mlvalue list -> unit
+
+    (** Returns location *)
+    val loc : mlop_state -> mllocation
   end
 
   module Operation : sig

@@ -1,62 +1,40 @@
 open Mlir
+open IR
 open Base
 open Parse
 
-let symbolTable = Hashtbl.create (module String)
-let f64 = BuiltinTypes.Float.f64 IR.Context.global_ctx
+let symbols = Hashtbl.create (module String)
 
-let typ shape =
-  if Array.length shape = 0
-  then BuiltinTypes.Tensor.unranked f64
-  else BuiltinTypes.Tensor.ranked shape f64 BuiltinAttributes.null
+(* fix me *)
+let loc = Location.unknown Context.global_ctx
 
-
-let mlirgen_proto name args =
-  let loc = IR.Location.unknown IR.Context.global_ctx in
-  let inputs = List.init (List.length args) ~f:(fun _ -> typ [||]) in
-  let func_typ_named_attr =
-    let func_typ = BuiltinTypes.Function.get IR.Context.global_ctx ~inputs ~results:[] in
-    IR.Attribute.name "function_type" (BuiltinAttributes.Type.get func_typ)
-  in
-  let func_name_named_attr =
-    IR.Attribute.name "sym_name" (BuiltinAttributes.String.get IR.Context.global_ctx name)
-  in
-  let func_op_state = IR.OperationState.get "toy.func" loc in
-  let () =
-    IR.OperationState.add_named_attributes
-      func_op_state
-      [ func_name_named_attr; func_typ_named_attr ]
-  in
-  let region = IR.Region.create () in
-  let entry_block = IR.Block.create inputs [ loc ] in
-  let () = IR.Region.append_owned_block region entry_block in
-  let () = IR.OperationState.add_owned_regions func_op_state [ region ] in
-  IR.Operation.create func_op_state
+let typ =
+  let f64 = BuiltinTypes.Float.f64 Context.global_ctx in
+  function
+  | Some shape -> BuiltinTypes.Tensor.ranked shape f64 BuiltinAttributes.null
+  | None -> BuiltinTypes.Tensor.unranked f64
 
 
 let rec mlirgen_expr block =
-  let const_op shp values =
-    let typ =
-      match shp with
-      | [||] -> BuiltinTypes.Tensor.ranked [||] f64 BuiltinAttributes.null
-      | _ -> typ shp
-    in
-    let attr = BuiltinAttributes.Dense.Elements.double_get typ values in
-    let named_attr = IR.Attribute.name "value" attr in
-    let const_op_state =
-      IR.OperationState.get "toy.constant" (IR.Location.unknown IR.Context.global_ctx)
-    in
-    let () = IR.OperationState.add_named_attributes const_op_state [ named_attr ] in
-    let () = IR.OperationState.add_results const_op_state [ typ ] in
-    IR.Operation.create const_op_state
+  let mlirgen_expr e = mlirgen_expr block e in
+  let append_op_get_result op =
+    let () = Block.append_owned_operation block op in
+    Operation.result op 0
   in
-  let append_operation_and_get_result op =
-    let () = IR.Block.append_owned_operation block op in
-    IR.Operation.result op 0
+  let const_op shp values =
+    let const_op_st = OperationState.get "toy.constant" loc in
+    let typ = typ (Some shp) in
+    let value_attr =
+      let value_attr = BuiltinAttributes.Dense.Elements.double_get typ values in
+      Attribute.name "value" value_attr
+    in
+    let () = OperationState.add_results const_op_st [ typ ] in
+    let () = OperationState.add_named_attributes const_op_st [ value_attr ] in
+    Operation.create const_op_st
   in
   function
-  | Ast.Num n -> append_operation_and_get_result (const_op [||] [ n ])
-  | Ast.Literal (shp, exs) ->
+  | Ast.Num n -> append_op_get_result (const_op [||] [ n ])
+  | Ast.Literal (shape, exs) ->
     let values =
       let rec helper acc = function
         | Ast.Num n -> n :: acc
@@ -65,139 +43,153 @@ let rec mlirgen_expr block =
       in
       helper [] (Ast.Literal ([||], exs)) |> List.rev
     in
-    append_operation_and_get_result (const_op shp values)
+    append_op_get_result (const_op shape values)
   | Ast.VarDecl (name, shape, init_expr) ->
-    let init_value = mlirgen_expr block init_expr in
+    let init_value = mlirgen_expr init_expr in
     let value =
       if Array.length shape <> 0
       then (
-        let typ = typ shape in
-        let op_state =
-          IR.OperationState.get "toy.reshape" (IR.Location.unknown IR.Context.global_ctx)
+        let reshape_op =
+          let typ = typ (Some shape) in
+          let op_st = OperationState.get "toy.reshape" loc in
+          let () = OperationState.add_operands op_st [ init_value ] in
+          let () = OperationState.add_results op_st [ typ ] in
+          Operation.create op_st
         in
-        let () = IR.OperationState.add_operands op_state [ init_value ] in
-        let () = IR.OperationState.add_results op_state [ typ ] in
-        let reshape_op = IR.Operation.create op_state in
-        append_operation_and_get_result reshape_op)
+        append_op_get_result reshape_op)
       else init_value
     in
-    let () = Hashtbl.add_exn symbolTable ~key:name ~data:value in
-    value
+    (match Hashtbl.add symbols ~key:name ~data:value with
+     | `Duplicate -> failwith @@ Printf.sprintf "'%s' already defined." name
+     | `Ok -> value)
   | Ast.Return expr ->
-    let op_state =
-      IR.OperationState.get "toy.return" (IR.Location.unknown IR.Context.global_ctx)
+    let ret_op =
+      let op_st = OperationState.get "toy.return" loc in
+      (match expr with
+       | Some e ->
+         let value = mlirgen_expr e in
+         OperationState.add_operands op_st [ value ]
+       | _ -> ());
+      Operation.create op_st
     in
-    let () =
-      match expr with
-      | Some e ->
-        let value = mlirgen_expr block e in
-        IR.OperationState.add_operands op_state [ value ]
-      | _ -> ()
-    in
-    append_operation_and_get_result (IR.Operation.create op_state)
+    append_op_get_result ret_op
   | Ast.BinOp (op, lhs, rhs) ->
-    let lhs = mlirgen_expr block lhs in
-    let rhs = mlirgen_expr block rhs in
+    let lhs = mlirgen_expr lhs in
+    let rhs = mlirgen_expr rhs in
     let op_name =
-      Stdlib.Printf.sprintf
+      Printf.sprintf
         "toy.%s"
         (match op with
          | `Add -> "add"
          | `Mul -> "mul")
     in
-    let op_state =
-      IR.OperationState.get op_name (IR.Location.unknown IR.Context.global_ctx)
+    let bin_op =
+      let op_st = OperationState.get op_name loc in
+      let () = OperationState.add_operands op_st [ lhs; rhs ] in
+      let () = OperationState.add_results op_st [ Value.get_type lhs ] in
+      Operation.create op_st
     in
-    let () = IR.OperationState.add_operands op_state [ lhs; rhs ] in
-    let () = IR.OperationState.add_results op_state [ IR.Value.get_type rhs ] in
-    append_operation_and_get_result (IR.Operation.create op_state)
+    append_op_get_result bin_op
   | Ast.Call (f_name, exprs) ->
     let operands =
-      List.fold_right exprs ~init:[] ~f:(fun e acc -> mlirgen_expr block e :: acc)
+      List.fold_right exprs ~init:[] ~f:(fun e acc -> mlirgen_expr e :: acc)
     in
     (match f_name with
-     | "transpose"
-       when match operands with
-            | [ _ ] -> true
-            | _ -> false ->
-       let op_state =
-         IR.OperationState.get "toy.transpose" (IR.Location.unknown IR.Context.global_ctx)
-       in
-       let () = IR.OperationState.add_operands op_state operands in
-       let () = IR.OperationState.add_results op_state [ typ [||] ] in
-       append_operation_and_get_result (IR.Operation.create op_state)
-     | "transpose" -> assert false
+     | "transpose" ->
+       (match operands with
+        | [ _ ] ->
+          let transpose_op =
+            let op_st = OperationState.get "toy.transpose" loc in
+            let () = OperationState.add_operands op_st operands in
+            let () = OperationState.add_results op_st [ typ None ] in
+            Operation.create op_st
+          in
+          append_op_get_result transpose_op
+        | _ -> failwith "transpose must have 1 argument")
      | _ ->
-       let op_state =
-         IR.OperationState.get
-           "toy.generic_call"
-           (IR.Location.unknown IR.Context.global_ctx)
+       let call_op =
+         let op_st = OperationState.get "toy.generic_call" loc in
+         let callee_attr =
+           Attribute.name
+             "callee"
+             (BuiltinAttributes.FlatSymbolRef.get Context.global_ctx f_name)
+         in
+         let () = OperationState.add_named_attributes op_st [ callee_attr ] in
+         let () = OperationState.add_operands op_st operands in
+         let () = OperationState.add_results op_st [ typ None ] in
+         Operation.create op_st
        in
-       let callee_named_attr =
-         IR.Attribute.name
-           "callee"
-           (BuiltinAttributes.FlatSymbolRef.get IR.Context.global_ctx f_name)
-       in
-       let () = IR.OperationState.add_named_attributes op_state [ callee_named_attr ] in
-       let () =
-         if Stdlib.(operands <> []) then IR.OperationState.add_operands op_state operands
-       in
-       let () = IR.OperationState.add_results op_state [ typ [||] ] in
-       append_operation_and_get_result (IR.Operation.create op_state))
+       append_op_get_result call_op)
   | Ast.Print expr ->
-    let value = mlirgen_expr block expr in
-    let op_state =
-      IR.OperationState.get "toy.print" (IR.Location.unknown IR.Context.global_ctx)
+    let value = mlirgen_expr expr in
+    let print_op =
+      let op_state = OperationState.get "toy.print" loc in
+      let () = OperationState.add_operands op_state [ value ] in
+      Operation.create op_state
     in
-    let () = IR.OperationState.add_operands op_state [ value ] in
-    append_operation_and_get_result (IR.Operation.create op_state)
-  | Ast.Var var -> Hashtbl.find_exn symbolTable var
+    append_op_get_result print_op
+  | Ast.Var var ->
+    (match Hashtbl.find symbols var with
+     | Some v -> v
+     | None -> failwith @@ Printf.sprintf "unknown variable: %s" var)
 
 
-let mlirgen_func name f_args exprs =
-  let () = Hashtbl.clear symbolTable in
-  let func = mlirgen_proto name f_args in
-  let block = IR.Region.first_block (IR.Operation.region func 0) in
-  let block_args =
-    List.init (IR.Block.num_arguments block) ~f:(fun n -> IR.Block.argument block n)
-  in
-  let () =
-    List.iter2_exn f_args block_args ~f:(fun f_arg b_arg ->
-      Hashtbl.add_exn symbolTable ~key:f_arg ~data:b_arg)
-  in
-  let () =
-    List.iter exprs ~f:(fun e ->
-      let _ = mlirgen_expr block e in
-      ())
-  in
-  match IR.Operation.num_operands (IR.Block.terminator block) with
-  | 0 -> func
-  | _ ->
-    let result_typ = typ [||] in
-    let input_typs = List.map block_args ~f:(fun v -> IR.Value.get_type v) in
-    let func_typ =
-      BuiltinTypes.Function.get
-        IR.Context.global_ctx
-        ~inputs:input_typs
-        ~results:[ result_typ ]
-    in
-    let func_attr = BuiltinAttributes.Type.get func_typ in
-    IR.Operation.set_attribute_by_name func "function_type" func_attr;
-    func
+let mlirgen_func = function
+  | Ast.Function (proto, exprs) ->
+    (match proto with
+     | Ast.Prototype (f_name, f_args) ->
+       let () = Hashtbl.clear symbols in
+       let num_args = List.length f_args in
+       let arg_typs = List.init num_args ~f:(fun _ -> typ None) in
+       let blk = Block.create arg_typs (List.init num_args ~f:(fun _ -> loc)) in
+       (* add block's args in symbol table *)
+       let () =
+         let block_args = List.init num_args ~f:(Block.argument blk) in
+         List.iter2_exn f_args block_args ~f:(fun name value ->
+           Hashtbl.add_exn symbols ~key:name ~data:value)
+       in
+       let () =
+         List.iter exprs ~f:(fun e ->
+           let _ = mlirgen_expr blk e in
+           ());
+         if Operation.is_null @@ Block.terminator blk
+         then (
+           let _ = mlirgen_expr blk (Return None) in
+           ())
+       in
+       let func_op_state = OperationState.get "toy.func" loc in
+       let attrs =
+         let func_typ_attr =
+           let results =
+             match Operation.num_operands @@ Block.terminator blk with
+             | 0 -> []
+             | _ -> [ typ None ]
+           in
+           let func_typ =
+             BuiltinTypes.Function.get Context.global_ctx ~inputs:arg_typs ~results
+           in
+           Attribute.name "function_type" (BuiltinAttributes.Type.get func_typ)
+         in
+         let func_name_attr =
+           Attribute.name
+             "sym_name"
+             (BuiltinAttributes.String.get Context.global_ctx f_name)
+         in
+         [ func_name_attr; func_typ_attr ]
+       in
+       let () = OperationState.add_named_attributes func_op_state attrs in
+       let region = Region.create () in
+       let () = Region.append_owned_block region blk in
+       let () = OperationState.add_owned_regions func_op_state [ region ] in
+       Operation.create func_op_state)
 
 
 let mlirgen modul =
-  let mlir_module = IR.Module.empty (IR.Location.unknown IR.Context.global_ctx) in
-  let module_block = IR.Module.body mlir_module in
-  let funcs =
-    List.fold modul ~init:[] ~f:(fun acc f ->
-      match f with
-      | Ast.Function (proto, exprs) ->
-        (match proto with
-         | Prototype (name, args) -> mlirgen_func name args exprs :: acc))
-  in
+  let mlir_module = Module.empty loc in
+  let module_block = Module.body mlir_module in
   let () =
-    List.iter (List.rev funcs) ~f:(fun f ->
-      IR.Block.append_owned_operation module_block f)
+    List.iter modul ~f:(fun f ->
+      let f = mlirgen_func f in
+      Block.append_owned_operation module_block f)
   in
   mlir_module

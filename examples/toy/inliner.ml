@@ -43,7 +43,7 @@ let inline_calls_in_main modul =
                   (IR.Location.unknown IR.Context.global_ctx)
               in
               let () = IR.OperationState.add_operands op_state [ arg ] in
-              let () = IR.OperationState.add_results op_state [ Mlir_gen.typ [||] ] in
+              let () = IR.OperationState.add_results op_state [ Mlir_gen.typ None ] in
               IR.Operation.create op_state :: acc)
           in
           let callee =

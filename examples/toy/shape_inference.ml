@@ -65,7 +65,7 @@ let run main_func _ =
               Array.rev
               @@ Array.init rank ~f:(fun dim -> BuiltinTypes.Shaped.dim_size typ dim)
             in
-            Mlir_gen.typ transposed_shape
+            Mlir_gen.typ (Some transposed_shape)
           | _ -> failwith "unkown operation"
         in
         (* Change the type of the operation result. In fact, create a similar operation,

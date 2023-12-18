@@ -153,6 +153,9 @@ module IR = struct
       let n = List.length operands |> Intptr.of_int in
       let operands = CArray.(start (of_list Typs.Value.t operands)) in
       add_operands opstate n operands
+
+
+    let loc opstate = getf opstate Typs.OperationState.location
   end
 
   module Operation = struct
