@@ -29,7 +29,7 @@
   $ dune exec -- toy -emit ast -f code.toy
   [(Ast.Function ((Ast.Prototype ("multiply_transpose", ["a"; "b"])),
       [(Ast.Return
-          (Some (Ast.BinOp ('*', (Ast.Call ("transpose", [(Ast.Var "a")])),
+          (Some (Ast.BinOp (`Mul, (Ast.Call ("transpose", [(Ast.Var "a")])),
                    (Ast.Call ("transpose", [(Ast.Var "b")]))))))
         ]
       ));

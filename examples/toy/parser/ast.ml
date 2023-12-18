@@ -7,7 +7,7 @@ type expr =
   | Var of var
   | VarDecl of string * shape * expr
   | Return of expr option
-  | BinOp of char * expr * expr
+  | BinOp of [ `Add | `Mul ] * expr * expr
   | Call of string * expr list
   | Print of expr
 [@@deriving show]

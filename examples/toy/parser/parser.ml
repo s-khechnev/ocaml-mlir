@@ -127,10 +127,10 @@ let func =
           return (Call (callee, args))
         in
         let bin_op =
-          let op s = char s *> return (fun lhs rhs -> BinOp (s, lhs, rhs)) in
+          let op ch s = char ch *> return (fun lhs rhs -> BinOp (s, lhs, rhs)) in
           fix (fun ex ->
-            let add = op '+' in
-            let mul = op '*' in
+            let add = op '+' `Add in
+            let mul = op '*' `Mul in
             let factor = parens ex <|> choice [ call; literal; ident_exp ] in
             let term = chainl1 factor (ws *> mul <* ws) in
             chainl1 term (ws *> add <* ws))

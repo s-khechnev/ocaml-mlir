@@ -102,9 +102,8 @@ let rec mlirgen_expr block =
       Stdlib.Printf.sprintf
         "toy.%s"
         (match op with
-         | '+' -> "add"
-         | '*' -> "mul"
-         | _ -> assert false)
+         | `Add -> "add"
+         | `Mul -> "mul")
     in
     let op_state =
       IR.OperationState.get op_name (IR.Location.unknown IR.Context.global_ctx)

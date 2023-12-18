@@ -56,11 +56,11 @@
          (Ast.VarDecl ("b", [||], (Ast.Literal ([|1|], [(Ast.Num 1.)]))));
          (Ast.VarDecl ("c", [||], (Ast.Call ("func", [(Ast.Var "a")]))));
          (Ast.VarDecl ("d", [||],
-            (Ast.BinOp ('+', (Ast.Literal ([|1|], [(Ast.Num 1.)])),
+            (Ast.BinOp (`Add, (Ast.Literal ([|1|], [(Ast.Num 1.)])),
                (Ast.Var "b")))
             ));
          (Ast.VarDecl ("e", [||],
-            (Ast.BinOp ('+', (Ast.Literal ([|1|], [(Ast.Num 1.)])),
+            (Ast.BinOp (`Add, (Ast.Literal ([|1|], [(Ast.Num 1.)])),
                (Ast.Var "d")))
             ));
          (Ast.VarDecl ("f", [|2; 3|],
