@@ -36,7 +36,8 @@ jobs:
                 gpg --dearmor                               |
             sudo dd of=/etc/apt/trusted.gpg.d/llvm-snapshot.gpg
             sudo apt-get update
-            sudo apt-get install llvm-16-dev llvm-16-tools libmlir-16-dev mlir-16-tools -y
+            sudo apt-get install clang-16 llvm-16-dev llvm-16-tools libmlir-16-dev mlir-16-tools -y
+            sudo update-alternatives --install /usr/bin/c++ c++ /usr/bin/clang++-16 100
             opam pin add ./ -n
             opam depext mlir -y
             opam install . --deps-only --with-test --with-doc
@@ -46,8 +47,8 @@ jobs:
             opam exec -- dune build --profile=release
             opam exec -- dune build @install --profile=release
       
-      - name: Runing tests
-        run: opam exec -- dune runtest
+      - name: Running tests
+        run: opam exec -- dune runtest --profile=release
 
       - name: Send coverage report to Coveralls
         if: github.event_name != 'pull_request'

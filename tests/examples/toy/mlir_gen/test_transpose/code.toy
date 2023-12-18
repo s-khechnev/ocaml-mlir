@@ -1,0 +1,3 @@
+def main() {
+  var a = transpose([[1, 2], [3, 4]]);
+}
