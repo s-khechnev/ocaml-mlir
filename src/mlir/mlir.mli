@@ -503,6 +503,10 @@ module IR : sig
 
     (** Views the module as a generic operation. *)
     val operation : mlmodule -> mlop
+
+    (** Views the generic operation as a module.
+        The returned module is null when the input operation was not a ModuleOp. *)
+    val from_op : mlop -> mlmodule
   end
 
   module Identifier : sig
@@ -1506,4 +1510,7 @@ end
 val with_context : (mlcontext -> 'a) -> 'a
 
 (** [with_pass_manager f ctx]  creates a Pass Manager [pm] for the given context [ctx], applies [f] to it, destroys it and returns the result of applying [f] *)
-val with_pass_manager : f:(mlpm -> 'a) -> mlcontext -> 'a
+val with_pass_manager : (mlpm -> 'a) -> mlcontext -> 'a
+
+(** [with_type_id_alloc f]  creates a Type Id Allocator, applies [f] to it, destroys it and returns the result of applying [f] *)
+val with_type_id_alloc : (mltypeid_alloc -> 'a) -> 'a

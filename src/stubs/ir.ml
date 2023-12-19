@@ -261,7 +261,7 @@ module Bindings (F : FOREIGN) = struct
 
 
     (* Views the module as a generic operation. *)
-    let from_operation =
+    let from_op =
       foreign "mlirModuleFromOperation" (Typs.Operation.t @-> returning Typs.Module.t)
   end
 

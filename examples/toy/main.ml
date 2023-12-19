@@ -86,7 +86,8 @@ let () =
                 let () =
                   if config.enable_opt || is_to_affine
                   then (
-                    let () = Inliner.inline_calls_in_main modul in
+                    let inline_pass = Inliner.pass () in
+                    let () = PassManager.add_owned_pass pm inline_pass in
                     let toy_func_op_pm = PassManager.nested_under pm "toy.func" in
                     let () =
                       OpPassManager.add_owned_pass

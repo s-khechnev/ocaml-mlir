@@ -828,8 +828,15 @@ let with_context f =
   result
 
 
-let with_pass_manager ~f ctx =
+let with_pass_manager f ctx =
   let pm = PassManager.create ctx in
   let result = f pm in
   PassManager.destroy pm;
+  result
+
+
+let with_type_id_alloc f =
+  let alloc = TypeIDAllocator.create () in
+  let result = f alloc in
+  TypeIDAllocator.destroy alloc;
   result
