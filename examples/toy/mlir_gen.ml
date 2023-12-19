@@ -15,6 +15,12 @@ let typ =
   | None -> BuiltinTypes.Tensor.unranked f64
 
 
+let declare var value =
+  match Hashtbl.add symbols ~key:var ~data:value with
+  | `Duplicate -> raise @@ Failure (Printf.sprintf "'%s' already defined" var)
+  | `Ok -> ()
+
+
 let rec mlirgen_expr block =
   let mlirgen_expr e = mlirgen_expr block e in
   let append_op_get_result op =
@@ -39,7 +45,7 @@ let rec mlirgen_expr block =
       let rec helper acc = function
         | Ast.Num n -> n :: acc
         | Ast.Literal (_, exs) -> List.fold exs ~init:acc ~f:(fun acc e -> helper acc e)
-        | _ -> assert false
+        | _ -> failwith "expected literal or number expr"
       in
       helper [] (Ast.Literal ([||], exs)) |> List.rev
     in
@@ -59,9 +65,8 @@ let rec mlirgen_expr block =
         append_op_get_result reshape_op)
       else init_value
     in
-    (match Hashtbl.add symbols ~key:name ~data:value with
-     | `Duplicate -> failwith @@ Printf.sprintf "'%s' already defined." name
-     | `Ok -> value)
+    let () = declare name value in
+    value
   | Ast.Return expr ->
     let ret_op =
       let op_st = OperationState.get "toy.return" loc in
@@ -91,9 +96,7 @@ let rec mlirgen_expr block =
     in
     append_op_get_result bin_op
   | Ast.Call (f_name, exprs) ->
-    let operands =
-      List.fold_right exprs ~init:[] ~f:(fun e acc -> mlirgen_expr e :: acc)
-    in
+    let operands = List.map exprs ~f:mlirgen_expr in
     (match f_name with
      | "transpose" ->
        (match operands with
@@ -105,7 +108,7 @@ let rec mlirgen_expr block =
             Operation.create op_st
           in
           append_op_get_result transpose_op
-        | _ -> failwith "transpose must have 1 argument")
+        | _ -> raise (Failure "transpose must have 1 argument"))
      | _ ->
        let call_op =
          let op_st = OperationState.get "toy.generic_call" loc in
@@ -131,7 +134,7 @@ let rec mlirgen_expr block =
   | Ast.Var var ->
     (match Hashtbl.find symbols var with
      | Some v -> v
-     | None -> failwith @@ Printf.sprintf "unknown variable: %s" var)
+     | None -> raise (Failure (Printf.sprintf "unknown variable: %s" var)))
 
 
 let mlirgen_func = function
@@ -145,8 +148,7 @@ let mlirgen_func = function
        (* add block's args in symbol table *)
        let () =
          let block_args = List.init num_args ~f:(Block.argument blk) in
-         List.iter2_exn f_args block_args ~f:(fun name value ->
-           Hashtbl.add_exn symbols ~key:name ~data:value)
+         List.iter2_exn f_args block_args ~f:(fun name value -> declare name value)
        in
        let () =
          List.iter exprs ~f:(fun e ->
@@ -187,9 +189,13 @@ let mlirgen_func = function
 let mlirgen modul =
   let mlir_module = Module.empty loc in
   let module_block = Module.body mlir_module in
-  let () =
+  try
     List.iter modul ~f:(fun f ->
       let f = mlirgen_func f in
-      Block.append_owned_operation module_block f)
-  in
-  mlir_module
+      Block.append_owned_operation module_block f);
+    if Operation.verify @@ Module.operation mlir_module
+    then Result.return mlir_module
+    else Result.fail "module verification"
+  with
+  | Failure msg -> Result.fail msg
+  | _ -> Result.fail "unknown error"
