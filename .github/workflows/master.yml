@@ -19,25 +19,26 @@ jobs:
       options: --user root
 
     steps:
-      - name: Cancel Previous Runs
-        uses: styfle/cancel-workflow-action@0.11.0
-        with:
-          access_token: ${{ github.token }}
-
       - name: Checkout code
         uses: actions/checkout@v3
 
-      
-      - name: Installing dependencies
+      - name: Add LLVM repository
         run: |
             echo "deb http://apt.llvm.org/jammy/ llvm-toolchain-jammy-16 main" | 
                 sudo dd of=/etc/apt/sources.list.d/llvm-toolchain-jammy-16.list
             curl https://apt.llvm.org/llvm-snapshot.gpg.key |
                 gpg --dearmor                               |
-            sudo dd of=/etc/apt/trusted.gpg.d/llvm-snapshot.gpg
+                sudo dd of=/etc/apt/trusted.gpg.d/llvm-snapshot.gpg
             sudo apt-get update
-            sudo apt-get install clang-16 llvm-16-dev llvm-16-tools libmlir-16-dev mlir-16-tools -y
+
+      - name: Set up c++ compiler
+        run: |
+            sudo apt-get install clang-16 -y
             sudo update-alternatives --install /usr/bin/c++ c++ /usr/bin/clang++-16 100
+
+      - name: Installing dependencies
+        run: |
+            sudo apt-get install llvm-16-dev llvm-16-tools libmlir-16-dev mlir-16-tools -y
             opam pin add ./ -n
             opam depext mlir -y
             opam install . --deps-only --with-test --with-doc
