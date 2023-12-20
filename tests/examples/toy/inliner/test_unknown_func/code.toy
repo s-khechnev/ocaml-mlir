@@ -1,0 +1,8 @@
+def bar(a) {
+  return a * [3, 4];
+}
+
+def main() {
+  var a = foo([1, 2]);
+  print(a);
+}

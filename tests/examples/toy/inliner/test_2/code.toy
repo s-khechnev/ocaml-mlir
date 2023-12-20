@@ -1,0 +1,12 @@
+def bar(b) {
+  return b * [2, 2];
+}
+
+def foo(a) {
+  return a + bar(a);
+}
+
+def main() {
+  var a = foo([1, 2]);
+  print(a);
+}
