@@ -45,7 +45,7 @@ let () =
   | None -> ()
   | _ ->
     (match config.filename with
-     | None -> Printf.eprintf "empty filename"
+     | None -> Printf.eprintf "empty filename\n"
      | Some filename ->
        let toy_str = In_channel.(with_open_text filename input_all) in
        let modul = Parser.parse toy_str in
@@ -97,7 +97,7 @@ let () =
                     OpPassManager.add_pipeline
                       toy_func_op_pm
                       "canonicalize,cse"
-                      ~callback:print_endline)
+                      ~callback:(Printf.eprintf "%s"))
                 in
                 let () =
                   if is_to_affine
@@ -112,14 +112,14 @@ let () =
                       OpPassManager.add_pipeline
                         func_op_pm
                         "canonicalize,cse"
-                        ~callback:print_endline
+                        ~callback:(Printf.eprintf "%s")
                     in
                     if config.enable_opt
                     then
                       OpPassManager.add_pipeline
                         func_op_pm
                         "affine-loop-fusion,affine-scalrep"
-                        ~callback:print_endline)
+                        ~callback:(Printf.eprintf "%s"))
                 in
                 let () =
                   if is_to_llvm
@@ -128,15 +128,15 @@ let () =
                       pm
                       (PassManager.get "createToyToLLVMLoweringPass")
                 in
-                let () =
-                  if not (PassManager.run pm modul) then print_endline "Pass fails"
-                in
-                (match config.action with
-                 | RunJIT ->
-                   let () = RegisterEverything.llvm_translations IR.Context.global_ctx in
-                   let opt_lvl = if config.enable_opt then 3 else 0 in
-                   let jit = ExecutionEngine.create modul opt_lvl [] false in
-                   if not @@ ExecutionEngine.invoke_packed jit "main"
-                   then print_endline "JIT fails"
-                 | _ -> IR.Operation.dump @@ IR.Module.operation modul))
+                if PassManager.run pm modul
+                then (
+                  match config.action with
+                  | RunJIT ->
+                    let () = RegisterEverything.llvm_translations IR.Context.global_ctx in
+                    let opt_lvl = if config.enable_opt then 3 else 0 in
+                    let jit = ExecutionEngine.create modul opt_lvl [] false in
+                    if not @@ ExecutionEngine.invoke_packed jit "main"
+                    then Printf.eprintf "%s" "JIT fails"
+                  | _ -> IR.Operation.dump @@ IR.Module.operation modul)
+                else Printf.eprintf "%s" "Some pass fails")
            | Result.Error msg -> Printf.eprintf "Mlir_gen error: %s" msg)))
