@@ -1,24 +1,27 @@
-includedir = $(shell llvm-config-16 --includedir)
-cxxflags = $(shell llvm-config-16 --cxxflags)
-td = dialect/include/toy/Ops.td
+.PHONY: tblgen mlir_toy capi_toy clean
+
+CXX ?= c++
+INCLUDE_DIR = $(shell llvm-config-16 --includedir)
+CXX_FLAGS = $(shell llvm-config-16 --cxxflags)
+TD = dialect/include/toy/Ops.td
 
 tblgen:
 	mkdir -p build/include/toy
-	mlir-tblgen-16 --gen-dialect-decls ${td} -I${includedir} -o build/include/toy/Dialect.h.inc
-	mlir-tblgen-16 --gen-dialect-defs ${td} -I${includedir} -o build/include/toy/Dialect.cpp.inc
-	mlir-tblgen-16 --gen-op-decls ${td} -I${includedir} -o build/include/toy/Ops.h.inc
-	mlir-tblgen-16 --gen-op-defs ${td} -I${includedir} -o build/include/toy/Ops.cpp.inc
-	mlir-tblgen-16 --gen-rewriters dialect/mlir/ToyCombine.td -Idialect/include -I${includedir} -o build/ToyCombine.inc	
+	mlir-tblgen-16 --gen-dialect-decls ${TD} -I${INCLUDE_DIR} -o build/include/toy/Dialect.h.inc
+	mlir-tblgen-16 --gen-dialect-defs ${TD} -I${INCLUDE_DIR} -o build/include/toy/Dialect.cpp.inc
+	mlir-tblgen-16 --gen-op-decls ${TD} -I${INCLUDE_DIR} -o build/include/toy/Ops.h.inc
+	mlir-tblgen-16 --gen-op-defs ${TD} -I${INCLUDE_DIR} -o build/include/toy/Ops.cpp.inc
+	mlir-tblgen-16 --gen-rewriters dialect/mlir/ToyCombine.td -Idialect/include -I${INCLUDE_DIR} -o build/ToyCombine.inc	
 
 mlir_toy: tblgen
-	c++ -fPIC -Wall -c dialect/mlir/Dialect.cpp -Idialect/include -I${includedir} -Ibuild/include/ ${cxxflags} -o build/ToyDialect.o
-	c++ -fPIC -Wall -c dialect/mlir/ToyCombine.cpp -Idialect/include -I${includedir} -Ibuild -Ibuild/include/ ${cxxflags} -o build/ToyCombine.o
-	c++ -fPIC -Wall -c dialect/mlir/LowerPrintToLLVM.cpp ${cxxflags} -Ibuild/include -Idialect/include -o build/LowerPrintToLLVM.o
-	c++ -shared build/ToyDialect.o build/ToyCombine.o build/LowerPrintToLLVM.o ${cxxflags} -o build/libMLIRToy.so
+	${CXX} -fPIC -Wall -c dialect/mlir/Dialect.cpp -Idialect/include -Ibuild/include/ ${CXX_FLAGS} -o build/ToyDialect.o
+	${CXX} -fPIC -Wall -c dialect/mlir/ToyCombine.cpp -Idialect/include -Ibuild -Ibuild/include/ ${CXX_FLAGS} -o build/ToyCombine.o
+	${CXX} -fPIC -Wall -c dialect/mlir/LowerPrintToLLVM.cpp ${CXX_FLAGS} -Ibuild/include -Idialect/include -o build/LowerPrintToLLVM.o
+	${CXX} -shared build/ToyDialect.o build/ToyCombine.o build/LowerPrintToLLVM.o ${CXX_FLAGS} -o build/libMLIRToy.so
 
 capi_toy: mlir_toy
-	c++ -fPIC -Wall -c dialect/CAPI/Dialects.cpp -Idialect/include -I${includedir} ${cxxflags} -Ibuild/include/ -o build/ToyCAPI.o
-	c++ -shared build/ToyCAPI.o ${cxxflags} -o build/libToyCAPI.so
+	${CXX} -fPIC -Wall -c dialect/CAPI/Dialects.cpp -Idialect/include -Ibuild/include/ ${CXX_FLAGS} -o build/ToyCAPI.o
+	${CXX} -shared build/ToyCAPI.o ${CXX_FLAGS} -o build/libToyCAPI.so
 
 clean:
 	rm -rf build

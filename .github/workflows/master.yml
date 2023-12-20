@@ -34,7 +34,7 @@ jobs:
       - name: Set up c++ compiler
         run: |
             sudo apt-get install clang-16 -y
-            sudo update-alternatives --install /usr/bin/c++ c++ /usr/bin/clang++-16 100
+            echo "CXX=clang++-16" >> $GITHUB_ENV
 
       - name: Installing dependencies
         run: |
