@@ -132,7 +132,6 @@ let () =
                 then (
                   match config.action with
                   | RunJIT ->
-                    let () = RegisterEverything.llvm_translations IR.Context.global_ctx in
                     let opt_lvl = if config.enable_opt then 3 else 0 in
                     let jit = ExecutionEngine.create modul opt_lvl [] false in
                     if not @@ ExecutionEngine.invoke_packed jit "main"
