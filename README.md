@@ -1,6 +1,6 @@
 [![Build llvm-16.0.6](https://github.com/s-khechnev/ocaml-mlir/actions/workflows/master.yml/badge.svg?branch=llvm-16.0.6)](https://github.com/s-khechnev/ocaml-mlir/actions/workflows/master.yml)
 [![License: MIT](https://img.shields.io/badge/License-MIT-yellow.svg)](https://opensource.org/licenses/MIT)
-[![Coverage Status](https://coveralls.io/repos/github/s-khechnev/ocaml-mlir/badge.svg?branch=llvm-16.0.6)](https://coveralls.io/github/s-khechnev/ocaml-mlir?branch=llvm-16.0.6)
+[![Coverage Status](https://coveralls.io/repos/github/s-khechnev/ocaml-mlir/badge.svg?branch=llvm-16.0.6)](https://coveralls.io/github/s-khechnev/ocaml-mlir?branch=llvm-16.0.6&kill_cache=1)
 
 # OCaml Bindings to MLIR (16.0.6)
 
