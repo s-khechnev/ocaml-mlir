@@ -47,10 +47,10 @@ module Bindings (F : FOREIGN) = struct
     foreign
       "mlirContextAttachDiagnosticHandler"
       (Typs.Context.t
-      @-> Typs.diagnostic_handler
-      @-> ptr void
-      @-> Ctypes.(Foreign.funptr (ptr void @-> returning void))
-      @-> returning void)
+       @-> Typs.diagnostic_handler
+       @-> ptr void
+       @-> Ctypes.(Foreign.funptr (ptr void @-> returning void))
+       @-> returning void)
 
 
   (* Detaches an attached diagnostic handler from the context given its
