@@ -92,7 +92,7 @@ let () =
                     let () =
                       OpPassManager.add_owned_pass
                         toy_func_op_pm
-                        (Shape_inference.infer_shapes_pass ())
+                        (Shape_inference.pass ())
                     in
                     OpPassManager.add_pipeline
                       toy_func_op_pm

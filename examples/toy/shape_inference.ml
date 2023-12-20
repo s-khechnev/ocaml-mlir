@@ -1,4 +1,5 @@
 open Mlir
+open IR
 open Base
 
 (* The ShapeInferencePass is a pass that performs intra-procedural
@@ -17,24 +18,24 @@ open Base
    d) infer the shape of its output from the argument types.
    3) If the worklist is empty, the algorithm succeeded. *)
 
-let run main_func _ =
-  let main_blk = IR.Region.first_block (IR.Operation.region main_func 0) in
+let run main_func pm =
+  let main_blk = Region.first_block (Operation.region main_func 0) in
   (* Populate the worklist with the operations that need shape inference:
      these are operations that return a dynamic shape. *)
   let worklist =
     let returns_dynamic_shape op =
-      let result = IR.Operation.result op 0 in
-      BuiltinTypes.Tensor.is_unranked_tensor (IR.Value.get_type result)
+      if Operation.num_results op = 0
+      then false
+      else (
+        let result = Operation.result op 0 in
+        BuiltinTypes.Tensor.is_unranked_tensor (Value.get_type result))
     in
-    List.filter (IR.Block.ops main_blk) ~f:(fun op ->
-      IR.Operation.num_results op <> 0 && returns_dynamic_shape op)
+    List.filter (Block.ops main_blk) ~f:returns_dynamic_shape
   in
   let all_operands_inferred op =
-    let opers =
-      List.init (IR.Operation.num_operands op) ~f:(fun n -> IR.Operation.operand op n)
-    in
+    let opers = List.init (Operation.num_operands op) ~f:(Operation.operand op) in
     List.for_all opers ~f:(fun value ->
-      BuiltinTypes.Tensor.is_ranked_tensor (IR.Value.get_type value))
+      BuiltinTypes.Tensor.is_ranked_tensor (Value.get_type value))
   in
   (* Iterate on the operations in the worklist until all operations have been
      inferred or no change happened (fix point). *)
@@ -47,73 +48,62 @@ let run main_func _ =
       match List.find lst ~f:all_operands_inferred with
       | Some op ->
         let result_shape =
-          match IR.Operation.name op with
-          | "toy.add" ->
-            let lhs = IR.Operation.operand op 0 in
-            IR.Value.get_type lhs
-          | "toy.mul" ->
-            let lhs = IR.Operation.operand op 0 in
-            IR.Value.get_type lhs
-          | "toy.cast" ->
-            let oper = IR.Operation.operand op 0 in
-            IR.Value.get_type oper
+          match Operation.name op with
+          | "toy.add" | "toy.mul" | "toy.cast" -> Value.get_type @@ Operation.operand op 0
           | "toy.transpose" ->
-            let oper = IR.Operation.operand op 0 in
-            let typ = IR.Value.get_type oper in
+            let typ = Value.get_type @@ Operation.operand op 0 in
             let rank = BuiltinTypes.Shaped.rank typ in
             let transposed_shape =
-              Array.rev
-              @@ Array.init rank ~f:(fun dim -> BuiltinTypes.Shaped.dim_size typ dim)
+              Array.rev @@ Array.init rank ~f:(BuiltinTypes.Shaped.dim_size typ)
             in
             Mlir_gen.typ (Some transposed_shape)
-          | _ -> failwith "unkown operation"
+          | _ -> raise (Failure "unknown operation")
         in
         (* Change the type of the operation result. In fact, create a similar operation,
            but with a different type of results and insert it instead of the old operation,
            deleting the old one. *)
         let () =
-          let opers =
-            List.init (IR.Operation.num_operands op) ~f:(IR.Operation.operand op)
+          let opers = List.init (Operation.num_operands op) ~f:(Operation.operand op) in
+          let new_op =
+            let op_st = OperationState.get (Operation.name op) (Operation.loc op) in
+            let () = OperationState.add_operands op_st opers in
+            let () = OperationState.add_results op_st [ result_shape ] in
+            Operation.create op_st
           in
-          let op_state =
-            IR.OperationState.get (IR.Operation.name op) (IR.Operation.loc op)
-          in
-          let () = IR.OperationState.add_operands op_state opers in
-          let () = IR.OperationState.add_results op_state [ result_shape ] in
-          let new_op = IR.Operation.create op_state in
-          IR.Value.replace_uses
-            ~old:(IR.Operation.result op 0)
-            ~fresh:(IR.Operation.result new_op 0);
-          IR.Block.insert_owned_operation_after main_blk op new_op;
-          IR.Operation.destroy op
+          Value.replace_uses
+            ~old:(Operation.result op 0)
+            ~fresh:(Operation.result new_op 0);
+          Block.insert_owned_operation_after main_blk op new_op;
+          Operation.destroy op
         in
-        (* Remove infered op from lst *)
-        let lst =
-          List.filter lst ~f:(fun curr_op -> not (IR.Operation.equal curr_op op))
-        in
+        (* Remove inferred op from lst *)
+        let lst = List.filter lst ~f:(fun opf -> not (Operation.equal opf op)) in
         loop lst
-      | None -> ())
+      | None ->
+        if not (List.is_empty lst) then raise (Failure "operations couldn't be inferred"))
   in
-  loop worklist;
-  (* remove casts *)
-  List.iter (IR.Block.ops main_blk) ~f:(fun op ->
-    if String.equal (IR.Operation.name op) "toy.cast"
-    then (
-      IR.Value.replace_uses
-        ~old:(IR.Operation.result op 0)
-        ~fresh:(IR.Operation.operand op 0);
-      IR.Operation.destroy op))
+  try
+    loop worklist;
+    (* remove casts *)
+    List.iter (Block.ops main_blk) ~f:(fun op ->
+      if String.equal (Operation.name op) "toy.cast"
+      then (
+        Value.replace_uses ~old:(Operation.result op 0) ~fresh:(Operation.operand op 0);
+        Operation.destroy op))
+  with
+  | Failure msg ->
+    Stdlib.Printf.eprintf "Shape inference: %s\n" msg;
+    ExternalPass.signal_failure pm
 
 
-let infer_shapes_pass () =
+let pass () =
   let callbacks = { ExternalPass.empty_callbacks with run } in
-  let alloc = TypeIDAllocator.create () in
-  let typ_id = TypeIDAllocator.allocate_type_id alloc in
+  let typ_id = with_type_id_alloc (fun alloc -> TypeIDAllocator.allocate_type_id alloc) in
   ExternalPass.create
     typ_id
     ~name:"shape_inference"
     ~arg:""
     ~desc:"Inference the tensor's shape"
-    ~op_name:""
+    ~op_name:"toy.func"
     ~dep_dialects:[]
     callbacks
