@@ -98,17 +98,6 @@ static void printBinaryOp(mlir::OpAsmPrinter &printer, mlir::Operation *op)
 // ConstantOp
 //===----------------------------------------------------------------------===//
 
-/// Build a constant operation.
-/// The builder is passed as an argument, so is the state that this method is
-/// expected to fill in order to build the operation.
-void ConstantOp::build(mlir::OpBuilder &builder, mlir::OperationState &state,
-                       double value)
-{
-  auto dataType = RankedTensorType::get({}, builder.getF64Type());
-  auto dataAttribute = DenseElementsAttr::get(dataType, value);
-  ConstantOp::build(builder, state, dataType, dataAttribute);
-}
-
 /// The 'OpAsmParser' class provides a collection of methods for parsing
 /// various punctuation, as well as attributes, operands, types, etc. Each of
 /// these methods returns a `ParseResult`. This class is a wrapper around
@@ -175,13 +164,6 @@ mlir::LogicalResult ConstantOp::verify()
 // AddOp
 //===----------------------------------------------------------------------===//
 
-void AddOp::build(mlir::OpBuilder &builder, mlir::OperationState &state,
-                  mlir::Value lhs, mlir::Value rhs)
-{
-  state.addTypes(UnrankedTensorType::get(builder.getF64Type()));
-  state.addOperands({lhs, rhs});
-}
-
 mlir::ParseResult AddOp::parse(mlir::OpAsmParser &parser,
                                mlir::OperationState &result)
 {
@@ -189,33 +171,10 @@ mlir::ParseResult AddOp::parse(mlir::OpAsmParser &parser,
 }
 
 void AddOp::print(mlir::OpAsmPrinter &p) { printBinaryOp(p, *this); }
-
-//===----------------------------------------------------------------------===//
-// GenericCallOp
-//===----------------------------------------------------------------------===//
-
-void GenericCallOp::build(mlir::OpBuilder &builder, mlir::OperationState &state,
-                          StringRef callee, ArrayRef<mlir::Value> arguments)
-{
-  // Generic call always returns an unranked Tensor initially.
-  state.addTypes(UnrankedTensorType::get(builder.getF64Type()));
-  state.addOperands(arguments);
-  state.addAttribute("callee",
-                     mlir::SymbolRefAttr::get(builder.getContext(), callee));
-}
   
 //===----------------------------------------------------------------------===//
 // FuncOp
 //===----------------------------------------------------------------------===//
-
-void FuncOp::build(mlir::OpBuilder &builder, mlir::OperationState &state,
-                   llvm::StringRef name, mlir::FunctionType type,
-                   llvm::ArrayRef<mlir::NamedAttribute> attrs)
-{
-  // FunctionOpInterface provides a convenient `build` method that will populate
-  // the state of our FuncOp, and create an entry block.
-  buildWithEntryBlock(builder, state, name, type, attrs, type.getInputs());
-}
 
 mlir::ParseResult FuncOp::parse(mlir::OpAsmParser &parser,
                                 mlir::OperationState &result)
@@ -247,13 +206,6 @@ void FuncOp::print(mlir::OpAsmPrinter &p)
 //===----------------------------------------------------------------------===//
 // MulOp
 //===----------------------------------------------------------------------===//
-
-void MulOp::build(mlir::OpBuilder &builder, mlir::OperationState &state,
-                  mlir::Value lhs, mlir::Value rhs)
-{
-  state.addTypes(UnrankedTensorType::get(builder.getF64Type()));
-  state.addOperands({lhs, rhs});
-}
 
 mlir::ParseResult MulOp::parse(mlir::OpAsmParser &parser,
                                mlir::OperationState &result)
@@ -304,13 +256,6 @@ mlir::LogicalResult ReturnOp::verify()
 //===----------------------------------------------------------------------===//
 // TransposeOp
 //===----------------------------------------------------------------------===//
-
-void TransposeOp::build(mlir::OpBuilder &builder, mlir::OperationState &state,
-                        mlir::Value value)
-{
-  state.addTypes(UnrankedTensorType::get(builder.getF64Type()));
-  state.addOperands(value);
-}
 
 mlir::LogicalResult TransposeOp::verify()
 {
