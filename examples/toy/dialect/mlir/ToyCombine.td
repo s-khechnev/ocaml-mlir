@@ -33,6 +33,9 @@ include "toy/Ops.td"
 def ReshapeReshapeOptPattern : Pat<(ReshapeOp(ReshapeOp $arg)),
                                    (ReshapeOp $arg)>;
 
+// transpose(transpose(x)) -> x
+def RedundantTransposeOptPattern : Pat<(TransposeOp(TransposeOp $arg)), (replaceWithValue $arg)>;
+
 //===----------------------------------------------------------------------===//
 // Pattern-Match and Rewrite using Native Code Call
 //===----------------------------------------------------------------------===//
