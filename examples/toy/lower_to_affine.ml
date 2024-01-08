@@ -305,6 +305,80 @@ let lower_op op blk =
       Operation.result load 0
     in
     lower_op_to_loops op blk body_builder
+  | "toy.print" ->
+    (* it's op casts ranked memref to unranked *)
+    let cast_op =
+      let cast_op_st = OperationState.get "memref.cast" (Operation.loc op) in
+      OperationState.add_operands cast_op_st [ Operation.operand op 0 ];
+      OperationState.add_results
+        cast_op_st
+        [ BuiltinTypes.MemRef.unranked f64 BuiltinAttributes.null ];
+      Operation.create cast_op_st
+    in
+    (* get or insert forward-declaration of "print" *)
+    let get_or_insert_print () =
+      let print_func_name = "printMemrefF64" in
+      let () =
+        let modul_blk =
+          let modul = Operation.(parent @@ parent op) in
+          Module.(body @@ from_op modul)
+        in
+        (* if print declaration not found, then create it *)
+        if not
+           @@ List.exists (Block.ops modul_blk) ~f:(fun op ->
+             let func_name =
+               BuiltinAttributes.String.value (Operation.attribute_by_name op "sym_name")
+             in
+             String.equal func_name print_func_name)
+        then (
+          let func_print_op =
+            let func_op_st = OperationState.get "func.func" (Operation.loc op) in
+            let () =
+              (* for jit *)
+              let emit_c_interface_attr =
+                Attribute.name
+                  "llvm.emit_c_interface"
+                  (BuiltinAttributes.Unit.get Context.global_ctx)
+              in
+              let name_attr =
+                Attribute.name
+                  "sym_name"
+                  (BuiltinAttributes.String.get Context.global_ctx print_func_name)
+              in
+              let visibility_attr =
+                Attribute.name
+                  "sym_visibility"
+                  (BuiltinAttributes.String.get Context.global_ctx "private")
+              in
+              let func_typ_attr =
+                let func_typ =
+                  BuiltinTypes.Function.get
+                    Context.global_ctx
+                    ~inputs:[ BuiltinTypes.MemRef.unranked f64 BuiltinAttributes.null ]
+                    ~results:[]
+                in
+                Attribute.name "function_type" (BuiltinAttributes.Type.get func_typ)
+              in
+              OperationState.add_named_attributes
+                func_op_st
+                [ emit_c_interface_attr; name_attr; visibility_attr; func_typ_attr ]
+            in
+            OperationState.add_owned_regions func_op_st [ Region.create () ];
+            Operation.create func_op_st
+          in
+          Block.append_owned_operation modul_blk func_print_op)
+      in
+      BuiltinAttributes.FlatSymbolRef.get Context.global_ctx print_func_name
+    in
+    let call_print_op =
+      let call_op_st = OperationState.get "func.call" (Operation.loc op) in
+      OperationState.add_named_attributes
+        call_op_st
+        [ Attribute.name "callee" (get_or_insert_print ()) ];
+      OperationState.add_operands call_op_st [ Operation.result cast_op 0 ];
+      Operation.create call_op_st
+    in
+    Block.insert_ops_after blk op [ cast_op; call_print_op ]
   | _ -> failwith "unknown op"
 
 
@@ -313,10 +387,8 @@ let run modul_op _ =
   let main_blk = Region.first_block (Operation.region main 0) in
   let () =
     List.iter (Block.ops main_blk) ~f:(fun op ->
-      if String.(Operation.name op <> "toy.print")
-      then (
-        let () = lower_op op main_blk in
-        Operation.destroy op))
+      let () = lower_op op main_blk in
+      Operation.destroy op)
   in
   lower_func main
 

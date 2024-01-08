@@ -9,7 +9,7 @@
     var c = multiply_transpose(a, b);
     print(c);
   }
-  $ dune exec -- toy -emit jit -f code.toy
-  1.000000 16.000000 
-  4.000000 25.000000 
-  9.000000 36.000000 
+  $ dune exec -- toy -emit jit -f code.toy | tail -n +2
+  [[1,   16], 
+   [4,   25], 
+   [9,   36]]

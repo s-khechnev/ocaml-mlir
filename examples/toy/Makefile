@@ -16,8 +16,7 @@ tblgen:
 mlir_toy: tblgen
 	${CXX} -fPIC -Wall -c dialect/mlir/Dialect.cpp -Idialect/include -Ibuild/include/ ${CXX_FLAGS} -o build/ToyDialect.o
 	${CXX} -fPIC -Wall -c dialect/mlir/ToyCombine.cpp -Idialect/include -Ibuild -Ibuild/include/ ${CXX_FLAGS} -o build/ToyCombine.o
-	${CXX} -fPIC -Wall -c dialect/mlir/LowerPrintToLLVM.cpp ${CXX_FLAGS} -Ibuild/include -Idialect/include -o build/LowerPrintToLLVM.o
-	${CXX} -shared build/ToyDialect.o build/ToyCombine.o build/LowerPrintToLLVM.o ${CXX_FLAGS} -o build/libMLIRToy.so
+	${CXX} -shared build/ToyDialect.o build/ToyCombine.o ${CXX_FLAGS} -o build/libMLIRToy.so
 
 capi_toy: mlir_toy
 	${CXX} -fPIC -Wall -c dialect/CAPI/Dialects.cpp -Idialect/include -Ibuild/include/ ${CXX_FLAGS} -o build/ToyCAPI.o

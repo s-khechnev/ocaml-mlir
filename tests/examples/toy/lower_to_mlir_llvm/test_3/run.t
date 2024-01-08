@@ -6,12 +6,20 @@
     print(c);
   }
   $ dune exec -- toy -emit mlir-llvm -f code.toy
-  module {
+  module attributes {llvm.data_layout = ""} {
     llvm.func @free(!llvm.ptr<i8>)
-    llvm.mlir.global internal constant @nl("\0A\00") {addr_space = 0 : i32}
-    llvm.mlir.global internal constant @frmt_spec("%f \00") {addr_space = 0 : i32}
-    llvm.func @printf(!llvm.ptr<i8>, ...) -> i32
     llvm.func @malloc(i64) -> !llvm.ptr<i8>
+    llvm.func @printMemrefF64(%arg0: i64, %arg1: !llvm.ptr<i8>) attributes {llvm.emit_c_interface, sym_visibility = "private"} {
+      %0 = llvm.mlir.undef : !llvm.struct<(i64, ptr<i8>)>
+      %1 = llvm.insertvalue %arg0, %0[0] : !llvm.struct<(i64, ptr<i8>)> 
+      %2 = llvm.insertvalue %arg1, %1[1] : !llvm.struct<(i64, ptr<i8>)> 
+      %3 = llvm.mlir.constant(1 : index) : i64
+      %4 = llvm.alloca %3 x !llvm.struct<(i64, ptr<i8>)> : (i64) -> !llvm.ptr<struct<(i64, ptr<i8>)>>
+      llvm.store %2, %4 : !llvm.ptr<struct<(i64, ptr<i8>)>>
+      llvm.call @_mlir_ciface_printMemrefF64(%4) : (!llvm.ptr<struct<(i64, ptr<i8>)>>) -> ()
+      llvm.return
+    }
+    llvm.func @_mlir_ciface_printMemrefF64(!llvm.ptr<struct<(i64, ptr<i8>)>>) attributes {llvm.emit_c_interface, sym_visibility = "private"}
     llvm.func @main() attributes {llvm.emit_c_interface} {
       %0 = llvm.mlir.constant(1.000000e+00 : f64) : f64
       %1 = llvm.mlir.constant(2.000000e+00 : f64) : f64
@@ -19,7 +27,7 @@
       %3 = llvm.mlir.constant(3 : index) : i64
       %4 = llvm.mlir.constant(1 : index) : i64
       %5 = llvm.mlir.null : !llvm.ptr<f64>
-      %6 = llvm.getelementptr %5[%3] : (!llvm.ptr<f64>, i64) -> !llvm.ptr<f64>
+      %6 = llvm.getelementptr %5[3] : (!llvm.ptr<f64>) -> !llvm.ptr<f64>
       %7 = llvm.ptrtoint %6 : !llvm.ptr<f64> to i64
       %8 = llvm.call @malloc(%7) : (i64) -> !llvm.ptr<i8>
       %9 = llvm.bitcast %8 : !llvm.ptr<i8> to !llvm.ptr<f64>
@@ -33,7 +41,7 @@
       %17 = llvm.mlir.constant(3 : index) : i64
       %18 = llvm.mlir.constant(1 : index) : i64
       %19 = llvm.mlir.null : !llvm.ptr<f64>
-      %20 = llvm.getelementptr %19[%17] : (!llvm.ptr<f64>, i64) -> !llvm.ptr<f64>
+      %20 = llvm.getelementptr %19[3] : (!llvm.ptr<f64>) -> !llvm.ptr<f64>
       %21 = llvm.ptrtoint %20 : !llvm.ptr<f64> to i64
       %22 = llvm.call @malloc(%21) : (i64) -> !llvm.ptr<i8>
       %23 = llvm.bitcast %22 : !llvm.ptr<i8> to !llvm.ptr<f64>
@@ -47,7 +55,7 @@
       %31 = llvm.mlir.constant(3 : index) : i64
       %32 = llvm.mlir.constant(1 : index) : i64
       %33 = llvm.mlir.null : !llvm.ptr<f64>
-      %34 = llvm.getelementptr %33[%31] : (!llvm.ptr<f64>, i64) -> !llvm.ptr<f64>
+      %34 = llvm.getelementptr %33[3] : (!llvm.ptr<f64>) -> !llvm.ptr<f64>
       %35 = llvm.ptrtoint %34 : !llvm.ptr<f64> to i64
       %36 = llvm.call @malloc(%35) : (i64) -> !llvm.ptr<i8>
       %37 = llvm.bitcast %36 : !llvm.ptr<i8> to !llvm.ptr<f64>
@@ -59,80 +67,54 @@
       %43 = llvm.insertvalue %31, %42[3, 0] : !llvm.struct<(ptr<f64>, ptr<f64>, i64, array<1 x i64>, array<1 x i64>)> 
       %44 = llvm.insertvalue %32, %43[4, 0] : !llvm.struct<(ptr<f64>, ptr<f64>, i64, array<1 x i64>, array<1 x i64>)> 
       %45 = llvm.mlir.constant(2 : index) : i64
-      %46 = llvm.extractvalue %44[1] : !llvm.struct<(ptr<f64>, ptr<f64>, i64, array<1 x i64>, array<1 x i64>)> 
-      %47 = llvm.getelementptr %46[%45] : (!llvm.ptr<f64>, i64) -> !llvm.ptr<f64>
-      llvm.store %2, %47 : !llvm.ptr<f64>
-      %48 = llvm.mlir.constant(1 : index) : i64
-      %49 = llvm.extractvalue %44[1] : !llvm.struct<(ptr<f64>, ptr<f64>, i64, array<1 x i64>, array<1 x i64>)> 
-      %50 = llvm.getelementptr %49[%48] : (!llvm.ptr<f64>, i64) -> !llvm.ptr<f64>
-      llvm.store %1, %50 : !llvm.ptr<f64>
-      %51 = llvm.mlir.constant(0 : index) : i64
-      %52 = llvm.extractvalue %44[1] : !llvm.struct<(ptr<f64>, ptr<f64>, i64, array<1 x i64>, array<1 x i64>)> 
-      %53 = llvm.getelementptr %52[%51] : (!llvm.ptr<f64>, i64) -> !llvm.ptr<f64>
-      llvm.store %0, %53 : !llvm.ptr<f64>
-      %54 = llvm.mlir.constant(2 : index) : i64
-      %55 = llvm.extractvalue %30[1] : !llvm.struct<(ptr<f64>, ptr<f64>, i64, array<1 x i64>, array<1 x i64>)> 
-      %56 = llvm.getelementptr %55[%54] : (!llvm.ptr<f64>, i64) -> !llvm.ptr<f64>
-      llvm.store %0, %56 : !llvm.ptr<f64>
+      %46 = llvm.getelementptr %37[2] : (!llvm.ptr<f64>) -> !llvm.ptr<f64>
+      llvm.store %2, %46 : !llvm.ptr<f64>
+      %47 = llvm.mlir.constant(1 : index) : i64
+      %48 = llvm.getelementptr %37[1] : (!llvm.ptr<f64>) -> !llvm.ptr<f64>
+      llvm.store %1, %48 : !llvm.ptr<f64>
+      %49 = llvm.mlir.constant(0 : index) : i64
+      llvm.store %0, %37 : !llvm.ptr<f64>
+      %50 = llvm.mlir.constant(2 : index) : i64
+      %51 = llvm.getelementptr %23[2] : (!llvm.ptr<f64>) -> !llvm.ptr<f64>
+      llvm.store %0, %51 : !llvm.ptr<f64>
+      %52 = llvm.mlir.constant(1 : index) : i64
+      %53 = llvm.getelementptr %23[1] : (!llvm.ptr<f64>) -> !llvm.ptr<f64>
+      llvm.store %1, %53 : !llvm.ptr<f64>
+      %54 = llvm.mlir.constant(0 : index) : i64
+      llvm.store %2, %23 : !llvm.ptr<f64>
+      %55 = llvm.mlir.constant(0 : index) : i64
+      %56 = llvm.mlir.constant(3 : index) : i64
       %57 = llvm.mlir.constant(1 : index) : i64
-      %58 = llvm.extractvalue %30[1] : !llvm.struct<(ptr<f64>, ptr<f64>, i64, array<1 x i64>, array<1 x i64>)> 
-      %59 = llvm.getelementptr %58[%57] : (!llvm.ptr<f64>, i64) -> !llvm.ptr<f64>
-      llvm.store %1, %59 : !llvm.ptr<f64>
-      %60 = llvm.mlir.constant(0 : index) : i64
-      %61 = llvm.extractvalue %30[1] : !llvm.struct<(ptr<f64>, ptr<f64>, i64, array<1 x i64>, array<1 x i64>)> 
-      %62 = llvm.getelementptr %61[%60] : (!llvm.ptr<f64>, i64) -> !llvm.ptr<f64>
-      llvm.store %2, %62 : !llvm.ptr<f64>
-      %63 = llvm.mlir.constant(0 : index) : i64
-      %64 = llvm.mlir.constant(3 : index) : i64
-      %65 = llvm.mlir.constant(1 : index) : i64
-      llvm.br ^bb1(%63 : i64)
-    ^bb1(%66: i64):  // 2 preds: ^bb0, ^bb2
-      %67 = llvm.icmp "slt" %66, %64 : i64
-      llvm.cond_br %67, ^bb2, ^bb3
+      llvm.br ^bb1(%55 : i64)
+    ^bb1(%58: i64):  // 2 preds: ^bb0, ^bb2
+      %59 = llvm.icmp "slt" %58, %56 : i64
+      llvm.cond_br %59, ^bb2, ^bb3
     ^bb2:  // pred: ^bb1
-      %68 = llvm.extractvalue %44[1] : !llvm.struct<(ptr<f64>, ptr<f64>, i64, array<1 x i64>, array<1 x i64>)> 
-      %69 = llvm.getelementptr %68[%66] : (!llvm.ptr<f64>, i64) -> !llvm.ptr<f64>
-      %70 = llvm.load %69 : !llvm.ptr<f64>
-      %71 = llvm.extractvalue %30[1] : !llvm.struct<(ptr<f64>, ptr<f64>, i64, array<1 x i64>, array<1 x i64>)> 
-      %72 = llvm.getelementptr %71[%66] : (!llvm.ptr<f64>, i64) -> !llvm.ptr<f64>
-      %73 = llvm.load %72 : !llvm.ptr<f64>
-      %74 = llvm.fmul %70, %73  : f64
-      %75 = llvm.extractvalue %16[1] : !llvm.struct<(ptr<f64>, ptr<f64>, i64, array<1 x i64>, array<1 x i64>)> 
-      %76 = llvm.getelementptr %75[%66] : (!llvm.ptr<f64>, i64) -> !llvm.ptr<f64>
-      llvm.store %74, %76 : !llvm.ptr<f64>
-      %77 = llvm.add %66, %65  : i64
-      llvm.br ^bb1(%77 : i64)
+      %60 = llvm.getelementptr %37[%58] : (!llvm.ptr<f64>, i64) -> !llvm.ptr<f64>
+      %61 = llvm.load %60 : !llvm.ptr<f64>
+      %62 = llvm.getelementptr %23[%58] : (!llvm.ptr<f64>, i64) -> !llvm.ptr<f64>
+      %63 = llvm.load %62 : !llvm.ptr<f64>
+      %64 = llvm.fmul %61, %63  : f64
+      %65 = llvm.getelementptr %9[%58] : (!llvm.ptr<f64>, i64) -> !llvm.ptr<f64>
+      llvm.store %64, %65 : !llvm.ptr<f64>
+      %66 = llvm.add %58, %57  : i64
+      llvm.br ^bb1(%66 : i64)
     ^bb3:  // pred: ^bb1
-      %78 = llvm.mlir.addressof @frmt_spec : !llvm.ptr<array<4 x i8>>
-      %79 = llvm.mlir.constant(0 : index) : i64
-      %80 = llvm.getelementptr %78[%79, %79] : (!llvm.ptr<array<4 x i8>>, i64, i64) -> !llvm.ptr<i8>
-      %81 = llvm.mlir.addressof @nl : !llvm.ptr<array<2 x i8>>
-      %82 = llvm.mlir.constant(0 : index) : i64
-      %83 = llvm.getelementptr %81[%82, %82] : (!llvm.ptr<array<2 x i8>>, i64, i64) -> !llvm.ptr<i8>
-      %84 = llvm.mlir.constant(0 : index) : i64
-      %85 = llvm.mlir.constant(3 : index) : i64
-      %86 = llvm.mlir.constant(1 : index) : i64
-      llvm.br ^bb4(%84 : i64)
-    ^bb4(%87: i64):  // 2 preds: ^bb3, ^bb5
-      %88 = llvm.icmp "slt" %87, %85 : i64
-      llvm.cond_br %88, ^bb5, ^bb6
-    ^bb5:  // pred: ^bb4
-      %89 = llvm.extractvalue %16[1] : !llvm.struct<(ptr<f64>, ptr<f64>, i64, array<1 x i64>, array<1 x i64>)> 
-      %90 = llvm.getelementptr %89[%87] : (!llvm.ptr<f64>, i64) -> !llvm.ptr<f64>
-      %91 = llvm.load %90 : !llvm.ptr<f64>
-      %92 = llvm.call @printf(%80, %91) : (!llvm.ptr<i8>, f64) -> i32
-      %93 = llvm.add %87, %86  : i64
-      llvm.br ^bb4(%93 : i64)
-    ^bb6:  // pred: ^bb4
-      %94 = llvm.extractvalue %44[0] : !llvm.struct<(ptr<f64>, ptr<f64>, i64, array<1 x i64>, array<1 x i64>)> 
-      %95 = llvm.bitcast %94 : !llvm.ptr<f64> to !llvm.ptr<i8>
-      llvm.call @free(%95) : (!llvm.ptr<i8>) -> ()
-      %96 = llvm.extractvalue %30[0] : !llvm.struct<(ptr<f64>, ptr<f64>, i64, array<1 x i64>, array<1 x i64>)> 
-      %97 = llvm.bitcast %96 : !llvm.ptr<f64> to !llvm.ptr<i8>
-      llvm.call @free(%97) : (!llvm.ptr<i8>) -> ()
-      %98 = llvm.extractvalue %16[0] : !llvm.struct<(ptr<f64>, ptr<f64>, i64, array<1 x i64>, array<1 x i64>)> 
-      %99 = llvm.bitcast %98 : !llvm.ptr<f64> to !llvm.ptr<i8>
-      llvm.call @free(%99) : (!llvm.ptr<i8>) -> ()
+      %67 = llvm.mlir.constant(1 : index) : i64
+      %68 = llvm.alloca %67 x !llvm.struct<(ptr<f64>, ptr<f64>, i64, array<1 x i64>, array<1 x i64>)> : (i64) -> !llvm.ptr<struct<(ptr<f64>, ptr<f64>, i64, array<1 x i64>, array<1 x i64>)>>
+      llvm.store %16, %68 : !llvm.ptr<struct<(ptr<f64>, ptr<f64>, i64, array<1 x i64>, array<1 x i64>)>>
+      %69 = llvm.bitcast %68 : !llvm.ptr<struct<(ptr<f64>, ptr<f64>, i64, array<1 x i64>, array<1 x i64>)>> to !llvm.ptr<i8>
+      %70 = llvm.mlir.constant(1 : index) : i64
+      %71 = llvm.mlir.undef : !llvm.struct<(i64, ptr<i8>)>
+      %72 = llvm.insertvalue %70, %71[0] : !llvm.struct<(i64, ptr<i8>)> 
+      %73 = llvm.insertvalue %69, %72[1] : !llvm.struct<(i64, ptr<i8>)> 
+      llvm.call @printMemrefF64(%70, %69) : (i64, !llvm.ptr<i8>) -> ()
+      %74 = llvm.bitcast %37 : !llvm.ptr<f64> to !llvm.ptr<i8>
+      llvm.call @free(%74) : (!llvm.ptr<i8>) -> ()
+      %75 = llvm.bitcast %23 : !llvm.ptr<f64> to !llvm.ptr<i8>
+      llvm.call @free(%75) : (!llvm.ptr<i8>) -> ()
+      %76 = llvm.bitcast %9 : !llvm.ptr<f64> to !llvm.ptr<i8>
+      llvm.call @free(%76) : (!llvm.ptr<i8>) -> ()
       llvm.return
     }
     llvm.func @_mlir_ciface_main() attributes {llvm.emit_c_interface} {

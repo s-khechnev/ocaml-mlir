@@ -124,16 +124,32 @@ let () =
                 let () =
                   if is_to_llvm
                   then
-                    PassManager.add_owned_pass
-                      pm
-                      (PassManager.get "createToyToLLVMLoweringPass")
+                    let open Conversion in
+                    List.iter
+                      (PassManager.add_owned_pass pm)
+                      [ AffineToStandard.create ()
+                      ; SCFToControlFlow.create ()
+                      ; ArithToLLVM.create ()
+                      ; MemRefToLLVMConversionPass.create ()
+                      ; ControlFlowToLLVM.create ()
+                      ; FuncToLLVM.create ()
+                      ; ReconcileUnrealizedCasts.create ()
+                      ]
                 in
                 if PassManager.run pm modul
                 then (
                   match config.action with
                   | RunJIT ->
+                    let utils_lib =
+                      (* this lib contains the "print" *)
+                      let lib_name = "libmlir_runner_utils.so" in
+                      let ch = Unix.open_process_in "llvm-config-16 --libdir" in
+                      let lib_dir = Option.get @@ In_channel.input_line ch in
+                      In_channel.close ch;
+                      Printf.sprintf "%s/%s" lib_dir lib_name
+                    in
                     let opt_lvl = if config.enable_opt then 3 else 0 in
-                    let jit = ExecutionEngine.create modul opt_lvl [] false in
+                    let jit = ExecutionEngine.create modul opt_lvl [ utils_lib ] false in
                     if not @@ ExecutionEngine.invoke_packed jit "main"
                     then Printf.eprintf "%s" "JIT fails"
                   | _ -> IR.Operation.dump @@ IR.Module.operation modul)
